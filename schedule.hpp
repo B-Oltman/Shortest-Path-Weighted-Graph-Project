@@ -15,8 +15,10 @@ class Schedule{
         //PrintComplete - print schedule for all stations
         //PrintSelected - print schedule for selected station
         //LookUpStationId - print station number for given station name
-        //LookUpStationName - print station name for given station number
+
+        //Print station name for given station number
         void LookUpStationName();
+
         //GetDirectRoute - returns whether there is a direct route from station A to station B
         //GetRoute - returns whether there is any route from station A to station B
         //TripLengthNoLayover - returns the shortest time to go from A to B with no layovers, else alert to no path
@@ -40,7 +42,23 @@ void Schedule::LookUpStationName()
     std::cout << "Enter station id: ";
     std::cin >> stationID;
 
-    bool noMatch = true;
+    if(stationID > 0 && stationID <= stationLookupTable.size())
+    {
+        //stationID - 1 maps the input to the corresponding vector entry.
+        std::cout << "Station " << stationLookupTable[stationID - 1][0] << " is " << 
+            stationLookupTable[stationID - 1][1] << std::endl;
+    }
+    else
+    {
+        std::cout <<"Invalid station id (enter value betweeen 1 and " << stationLookupTable.size() <<")\n";
+    }
+
+    //Clear input buffer
+    Utility::ClearInStream();
+    
+
+    //USE THIS to lookup station id by name.
+   /* bool noMatch = true;
     for(int i = 0; i < stationLookupTable.size() && noMatch; i++)
     {
         if(std::stoi(stationLookupTable[i][0]) == stationID)
@@ -55,8 +73,7 @@ void Schedule::LookUpStationName()
         std::cout <<"Invalid station id (enter value betweeen 1 and " << stationLookupTable.size() <<")\n";
     }
 
-    //Clear input buffer
-    Utility::ClearInStream();
+    */
 }
 
 void Schedule::BuildStationLookupTable(std::string stationData)
