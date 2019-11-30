@@ -15,6 +15,7 @@ class Schedule{
         //PrintComplete - print schedule for all stations
         //PrintSelected - print schedule for selected station
         //LookUpStationId - print station number for given station name
+        void LookUpStationId();
 
         //Print station name for given station number
         void LookUpStationName();
@@ -36,6 +37,33 @@ Schedule::Schedule(std::string stationData, std::string trainsData)
     BuildStationLookupTable(stationData);
 }
 
+void Schedule::LookUpStationId()
+{
+    std::string stationName;
+    std::cout << "Enter station name: ";
+    Utility::ClearInStream();
+    getline(std::cin, stationName);
+
+    bool noMatch = true;
+    for(int i = 0; i < stationLookupTable.size() && noMatch; i++)
+    {
+        if(Utility::CompareStringsNoCase(stationLookupTable[i][1], stationName))
+        {
+            std::string possessive = tolower(stationName[stationName.size() - 1]) == 's' ? "'" : "'s"; 
+            std::cout << stationLookupTable[i][1] << possessive << " station id is " << 
+            stationLookupTable[i][0] << std::endl;
+            noMatch = false;
+        }
+    }
+    if(noMatch)
+    {
+        std::cout <<"Invalid station name.\n";
+    }
+
+    std::cout <<"Press Enter to continue.";
+    Utility::ClearInStream();
+}
+
 void Schedule::LookUpStationName()
 {
     int stationID;
@@ -52,28 +80,19 @@ void Schedule::LookUpStationName()
     {
         std::cout <<"Invalid station id (enter value betweeen 1 and " << stationLookupTable.size() <<")\n";
     }
-
+  
     //Clear input buffer
     Utility::ClearInStream();
-    
 
-    //USE THIS to lookup station id by name.
-   /* bool noMatch = true;
-    for(int i = 0; i < stationLookupTable.size() && noMatch; i++)
+    std::cout << "Press Enter to continue.";
+    bool wait = true;
+    while(wait)
     {
-        if(std::stoi(stationLookupTable[i][0]) == stationID)
+        if(std::cin.get() == '\n')
         {
-            std::cout << "Station " << stationLookupTable[i][0] << " is " << 
-            stationLookupTable[i][1] << std::endl;
-            noMatch = false;
+            wait = false;
         }
     }
-    if(noMatch)
-    {
-        std::cout <<"Invalid station id (enter value betweeen 1 and " << stationLookupTable.size() <<")\n";
-    }
-
-    */
 }
 
 void Schedule::BuildStationLookupTable(std::string stationData)

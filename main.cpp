@@ -68,6 +68,7 @@ int main(int argc, char** argv)
             case 2:
                 break;
             case 3:
+                trainSchedule.LookUpStationId();
                 break;
             case 4:
                 trainSchedule.LookUpStationName();
