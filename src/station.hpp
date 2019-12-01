@@ -5,16 +5,28 @@
 class Station {
     public:
         int GetID();
-        Station(int ID, std::vector<Trip>& tripArray);
+        int GetTripCount();
+        Trip GetTrip(int tripIndex);
+        Station(int ID, std::vector<Trip> tripArray);
     private:
         std::vector<Trip> trips;
         int stationID;
 };
 
-Station::Station(int ID, std::vector<Trip>& tripArray)
+Station::Station(int ID, std::vector<Trip> tripArray)
 {
-    stationID = ID;
     trips = tripArray;
+    stationID = ID;
+}
+
+Trip Station::GetTrip(int tripIndex)
+{
+    return trips[tripIndex];
+}
+
+int Station::GetTripCount()
+{
+    return trips.size();
 }
 
 int Station::GetID()

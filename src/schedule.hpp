@@ -39,7 +39,7 @@ Schedule::Schedule(std::string stationData, std::string trainsData)
 {
     BuildStationLookupTable(stationData);
     BuildTripDataTable(trainsData);
-    stationGraph = new StationGraph(tripDataTable);
+    stationGraph = new StationGraph(tripDataTable, stationLookupTable.size());
 }
 
 Schedule::~Schedule()
