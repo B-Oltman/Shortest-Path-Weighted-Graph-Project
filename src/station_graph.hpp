@@ -8,21 +8,19 @@ class StationGraph{
     public:
         StationGraph(std::vector<std::vector<std::string>> tripData, int stationsCount);
     private:
-        std::vector<std::vector<std::string>> tripDataTable;
         int stationCount;
         std::vector<Station> stationList;
-        void BuildGraph();
+        void BuildGraph(std::vector<std::vector<std::string>> tripData);
         void DebugTestPrint();
 };
 
-StationGraph::StationGraph(std::vector<std::vector<std::string>> tripData, int stationsCount)
+StationGraph::StationGraph(std::vector<std::vector<std::string>> tripDataTable, int stationsCount)
 {
     stationCount = stationsCount;
-    tripDataTable = tripData;
-    BuildGraph();
+    BuildGraph(tripDataTable);
 }
 
-void StationGraph::BuildGraph()
+void StationGraph::BuildGraph(std::vector<std::vector<std::string>> tripDataTable)
 {
     // Use a temporary table to hold all trips so that they
     // can be passed into station constructor.
