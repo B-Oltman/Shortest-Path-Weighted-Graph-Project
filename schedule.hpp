@@ -4,7 +4,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include "graph.hpp"
+#include "station_graph.hpp"
 #include "utility.hpp"
 
 class Schedule{
@@ -12,6 +12,7 @@ class Schedule{
         //Constructor - create new schedule from data files.
         Schedule(std::string stationData, std::string trainsData);
         //Destructor - destroy schedule
+        ~Schedule();
         //PrintComplete - print schedule for all stations
         //PrintSelected - print schedule for selected station
         //LookUpStationId - print station number for given station name
@@ -27,14 +28,26 @@ class Schedule{
         //TripLengthGivenTime - returns the shortest time to go from A to B when departing at a specific time only. 
     private:
         std::vector<std::vector<std::string>> stationLookupTable;
-
+        std::vector<std::vector<std::string>> tripDataTable;
+        StationGraph* stationGraph;
         // Builds a lookup table to map station id to station name.
         void BuildStationLookupTable(std::string stationData);
+        void BuildTripDataTable(std::string trainsData);
 };
 
 Schedule::Schedule(std::string stationData, std::string trainsData)
 {
     BuildStationLookupTable(stationData);
+    BuildTripDataTable(trainsData);
+    stationGraph = new StationGraph(tripDataTable);
+}
+
+Schedule::~Schedule()
+{
+    if(stationGraph)
+    {
+        delete stationGraph;
+    }
 }
 
 void Schedule::LookUpStationId()
@@ -108,6 +121,23 @@ void Schedule::BuildStationLookupTable(std::string stationData)
         while(tokenStream >> token)
         {
             stationLookupTable[stationLookupTable.size() - 1].push_back(token);
+        }
+    }
+}
+
+void Schedule::BuildTripDataTable(std::string trainsData)
+{
+    std::stringstream lineStream(trainsData);
+    
+    std::string line;
+    while(getline(lineStream, line))
+    {
+        std::stringstream tokenStream(line);
+        std::string token;
+        tripDataTable.push_back({});
+        while(tokenStream >> token)
+        {
+            tripDataTable[tripDataTable.size() - 1].push_back(token);
         }
     }
 }
