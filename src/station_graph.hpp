@@ -28,19 +28,17 @@ void StationGraph::BuildGraph(std::vector<std::vector<std::string>> tripDataTabl
     // We don't want to allow the addition of new graph elements after construction because we are pre-computing shortest paths
     // so not making any public functions to add nodes or edges.
     std::vector<std::vector<Trip>> tempTripTable;
-    for(int i = 0; i < stationCount; i++)
-    {
-        //stationList.push_back(i + 1);
-        tempTripTable.push_back({});
-    }
+    tempTripTable.reserve(stationCount);
 
     //Add the trip data to tempTripTable array
     for(int i = 0; i < tripDataTable.size(); i++)
     {
         int startID = stoi(tripDataTable[i][0]) - 1;
         int destinationID = stoi(tripDataTable[i][1]);
-        int travelTimeMins = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
-        tempTripTable[startID].push_back({destinationID, travelTimeMins});
+        int arrivalTime = stoi(tripDataTable[i][3]);
+        int departureTime = stoi(tripDataTable[i][2]);
+        int travelTimeMins = (arrivalTime - departureTime);
+        tempTripTable[startID].push_back({destinationID, departureTime, arrivalTime, travelTimeMins});
     }
 
     //Construct the stations and add trips to graph.
