@@ -20,8 +20,10 @@ class Schedule{
 
         //Print station name for given station number
         void LookUpStationName();
+        std::string SimpleStationNameLookup(int stationID);
 
         //GetDirectRoute - returns whether there is a direct route from station A to station B
+        void GetDirectRoute();
         //GetRoute - returns whether there is any route from station A to station B
         //TripLengthNoLayover - returns the shortest time to go from A to B with no layovers, else alert to no path
         //TripLengthYesLayover - returns the shortest time to go from A to B, layovers are allowed, else alert user to no path
@@ -33,6 +35,8 @@ class Schedule{
         // Builds a lookup table to map station id to station name.
         void BuildStationLookupTable(std::string stationData);
         void BuildTripDataTable(std::string trainsData);
+        std::pair<int, int> PromptStationID() const;
+        
 };
 
 Schedule::Schedule(std::string stationData, std::string trainsData)
@@ -75,6 +79,18 @@ void Schedule::LookUpStationId()
 
     std::cout <<"Press Enter to continue.";
     Utility::ClearInStream();
+}
+
+std::string Schedule::SimpleStationNameLookup(int stationID)
+{
+    if(stationID > 0 && stationID <= stationLookupTable.size())
+    {
+           return stationLookupTable[stationID - 1][1];
+    }
+    else
+    {
+        return "INVALID";
+    }
 }
 
 void Schedule::LookUpStationName()
@@ -139,6 +155,44 @@ void Schedule::BuildTripDataTable(std::string trainsData)
         {
             tripDataTable[tripDataTable.size() - 1].push_back(token);
         }
+    }
+}
+
+std::pair<int, int> Schedule::PromptStationID() const
+{  
+    std::cout << "Enter departure station id: ";
+    int departID = Utility::GetIntFromUser();
+    while(stationGraph->GetStation(departID).StationIsValid() == false)
+    {
+        std::cout << "Departure station id invalid, try again: ";
+        departID = Utility::GetIntFromUser();
+    }
+
+    std::cout << "Enter destination station id: ";
+    int destID = Utility::GetIntFromUser();
+    while(stationGraph->GetStation(destID).StationIsValid() == false)
+    {
+        std::cout << "Destination station id invalid, try again: ";
+        destID = Utility::GetIntFromUser();
+    }
+
+    return {departID, destID};
+}
+
+void Schedule::GetDirectRoute()
+{
+    std::pair<int, int> stationPair = PromptStationID();
+
+    if(stationGraph->DirectPathExists(stationPair.first, stationPair.second))
+    {
+
+        std::cout << "Nonstop service is available from " << SimpleStationNameLookup(stationPair.first) << 
+        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
+    }
+    else
+    {
+        std::cout << "Nonstop service is NOT available from " << SimpleStationNameLookup(stationPair.first) << 
+        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
     }
 }
 

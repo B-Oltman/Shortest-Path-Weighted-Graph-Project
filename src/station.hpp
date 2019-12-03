@@ -4,9 +4,10 @@
 
 class Station {
     public:
-        int GetID();
-        int GetTripCount();
-        Trip GetTrip(int tripIndex);
+        int GetID() const;
+        int GetTripCount() const;
+        Trip GetTrip(int tripIndex) const;
+        bool StationIsValid() const;
         Station(int ID, std::vector<Trip> tripArray);
     private:
         std::vector<Trip> trips;
@@ -19,17 +20,22 @@ Station::Station(int ID, std::vector<Trip> tripArray)
     stationID = ID;
 }
 
-Trip Station::GetTrip(int tripIndex)
+bool Station::StationIsValid() const
+{
+    return (stationID > 0);
+}
+
+Trip Station::GetTrip(int tripIndex) const
 {
     return trips[tripIndex];
 }
 
-int Station::GetTripCount()
+int Station::GetTripCount() const
 {
     return trips.size();
 }
 
-int Station::GetID()
+int Station::GetID() const
 {
     return stationID;
 }

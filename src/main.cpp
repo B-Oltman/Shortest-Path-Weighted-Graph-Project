@@ -33,24 +33,11 @@ int main(int argc, char** argv)
 
     Schedule trainSchedule(stationData.str() , trainData.str());
 
+    Utility::PrintMainMenu();
+
     bool quit = false;
     while(!quit)
     {
-        std::cout << "========================================================================\n"
-        << "READING RAILWAYS SCHEDULER\n"
-        << "========================================================================\n"
-        << "Options - (Enter number of your selected option)\n"
-        << "(1) - Print full schedule\n"
-        << "(2) - Print station schedule\n"
-        << "(3) - Look up stationd id\n"
-        << "(4) - Look up station name\n"
-        << "(5) - Servie available\n"
-        << "(6) - Nonstop service available\n"
-        << "(7) - Find route (Shortest riding time)\n"
-        << "(8) - Find route (Shortest overall travel time)\n"
-        << "(9) - Find route (Shortest time, at specific departure time)\n"
-        << "(0) - Exit\n";
-
         std::cout << "Enter choice: ";
 
         int choice = -1;
@@ -76,6 +63,7 @@ int main(int argc, char** argv)
             case 5:
                 break;
             case 6:
+                trainSchedule.GetDirectRoute();
                 break;
             case 7:
                 break;
@@ -87,6 +75,7 @@ int main(int argc, char** argv)
                 quit = true;
                 break;
             default:
+                Utility::PrintMainMenu();
                 std::cout <<"Invalid choice (enter number 0-9).\n";
                 break;    
         }
