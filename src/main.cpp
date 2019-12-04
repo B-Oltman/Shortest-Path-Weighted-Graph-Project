@@ -60,6 +60,7 @@ int main(int argc, char** argv)
         switch (choice)
         {
             case 1:
+                trainSchedule.PrintCompleteSchedule();
                 break;
             case 2:
                 trainSchedule.PrintStationSchedule();
