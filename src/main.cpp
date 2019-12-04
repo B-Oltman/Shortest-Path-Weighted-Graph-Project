@@ -72,6 +72,7 @@ int main(int argc, char** argv)
                 trainSchedule.LookUpStationName();
                 break;
             case 5:
+                trainSchedule.GetRoute();
                 break;
             case 6:
                 trainSchedule.GetDirectRoute();
@@ -84,6 +85,7 @@ int main(int argc, char** argv)
                 break;
             case 0:
                 quit = true;
+                std::cout << "Exiting...\n";
                 break;
             default:
                 Utility::PrintMainMenu();

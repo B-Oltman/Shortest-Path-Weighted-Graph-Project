@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <queue>
 #include <string>
 #include <iostream>
 #include "station.hpp"
@@ -9,6 +10,7 @@ class StationGraph{
         StationGraph(std::vector<std::vector<std::string>> const tripData, int stationsCount);
         ~StationGraph();
         bool DirectPathExists(int station1ID, int station2ID);
+        bool PathExists(int startStationID, int targetStationID);
         Station GetStationFromDepartGraph(int stationID);
         Station GetStationFromArrivalGraph(int stationID);
     private:
@@ -19,14 +21,14 @@ class StationGraph{
         // Arrivals graph is an inverted version of the graph so that arrivals to a station can be
         // looked up easily. Only used for a few functions in the program.
         std::vector<Station>* arrivalsGraphList;
-        void BuildDeparturesGraph(std::vector<std::vector<std::string>> tripData);
-        void BuildArrivalsGraph(std::vector<std::vector<std::string>> tripData);
+        void build_departures_graph(std::vector<std::vector<std::string>> tripData);
+        void build_arrivals_graph(std::vector<std::vector<std::string>> tripData);
 };
 
 StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataTable, int stationsCount) : stationCount(stationsCount)
 {
-    BuildDeparturesGraph(tripDataTable);
-    BuildArrivalsGraph(tripDataTable);
+    build_departures_graph(tripDataTable);
+    build_arrivals_graph(tripDataTable);
 }
 
 StationGraph::~StationGraph()
@@ -35,7 +37,7 @@ StationGraph::~StationGraph()
     if(arrivalsGraphList) delete arrivalsGraphList;
 }
 
-void StationGraph::BuildDeparturesGraph(std::vector<std::vector<std::string>> tripDataTable)
+void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> tripDataTable)
 {
     // Use a temporary table to hold all trips so that they
     // can be passed into station constructor.
@@ -67,7 +69,7 @@ void StationGraph::BuildDeparturesGraph(std::vector<std::vector<std::string>> tr
     }
 }
 
-void StationGraph::BuildArrivalsGraph(std::vector<std::vector<std::string>> tripDataTable)
+void StationGraph::build_arrivals_graph(std::vector<std::vector<std::string>> tripDataTable)
 {
     arrivalsGraphList = new std::vector<Station>;
 
@@ -123,6 +125,51 @@ Station StationGraph::GetStationFromArrivalGraph(int stationID)
         // return invalid station if bad station ID
         return Station({-1, {}});
     } 
+}
+
+bool StationGraph::PathExists(int startStationID, int targetStationID)
+{
+    Station startStation = GetStationFromDepartGraph(startStationID);
+    Station targetStation = GetStationFromDepartGraph(targetStationID);
+
+    if(!startStation.StationIsValid() || !targetStation.StationIsValid())
+    {
+        std::cout << "Invalid station, please try again.\n";
+        return false;
+    }
+    std::vector<bool> discoveredSet(stationCount, false);
+    std::queue<Station> frontiereQueue;
+
+    discoveredSet[startStation.GetID() - 1] = true;
+    frontiereQueue.push(startStation);
+
+    while(!frontiereQueue.empty())
+    {
+        Station currentStation = frontiereQueue.front();
+        frontiereQueue.pop();
+
+        if(currentStation.GetID() == targetStation.GetID())
+        {
+            return true;
+        }
+
+        for(int i = 0; i < currentStation.GetTripCount(); i++)
+        {
+            // Store current adjacent node for processing.
+            Station adjacentStation = GetStationFromDepartGraph(currentStation.GetTrip(i).destinationID);
+
+
+
+            // If current adjacent node hasn't already been discovered, add it to frontiere queue and discover it.
+            if(!discoveredSet[adjacentStation.GetID() - 1])
+            {
+                frontiereQueue.push(adjacentStation);
+                discoveredSet[adjacentStation.GetID() - 1] = true;
+            }
+        }
+    }
+    // Frontiere queue empties before target is reached, no path exists.
+    return false;
 }
 
 bool StationGraph::DirectPathExists(int station1ID, int station2ID)

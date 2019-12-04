@@ -31,6 +31,7 @@ class Schedule{
         //Returns whether there is a direct route from station A to station B
         void GetDirectRoute();
         //GetRoute - returns whether there is any route from station A to station B
+        void GetRoute();
         //TripLengthNoLayover - returns the shortest time to go from A to B with no layovers, else alert to no path
         //TripLengthYesLayover - returns the shortest time to go from A to B, layovers are allowed, else alert user to no path
         //TripLengthGivenTime - returns the shortest time to go from A to B when departing at a specific time only. 
@@ -39,17 +40,17 @@ class Schedule{
         std::vector<std::vector<std::string>> tripDataTable;
         StationGraph* stationGraph;
         // Builds a lookup table to map station id to station name.
-        void BuildStationLookupTable(std::string stationData);
-        void BuildTripDataTable(std::string trainsData);
-        int PromptStationID() const;
-        std::pair<int, int> PromptStationPairID() const;
+        void build_station_lookup_table(std::string stationData);
+        void build_trip_data_table(std::string trainsData);
+        int prompt_station_id() const;
+        std::pair<int, int> prompt_station_pair_id() const;
         
 };
 
 Schedule::Schedule(std::string stationData, std::string trainsData)
 {
-    BuildStationLookupTable(stationData);
-    BuildTripDataTable(trainsData);
+    build_station_lookup_table(stationData);
+    build_trip_data_table(trainsData);
     stationGraph = new StationGraph(tripDataTable, stationLookupTable.size());
 }
 
@@ -75,7 +76,7 @@ void Schedule::PrintCompleteSchedule()
 
 void Schedule::PrintStationSchedule()
 {
-    int stationID = PromptStationID();
+    int stationID = prompt_station_id();
     Station station = stationGraph->GetStationFromDepartGraph(stationID);
     std::cout << "Schedule for " << SimpleStationNameLookup(station.GetID()) << std::endl;
     for(int i = 0; i < station.GetTripCount(); i++)
@@ -200,7 +201,7 @@ void Schedule::LookUpStationName()
     }
 }
 
-void Schedule::BuildStationLookupTable(std::string stationData)
+void Schedule::build_station_lookup_table(std::string stationData)
 {
     std::stringstream lineStream(stationData);
     
@@ -217,7 +218,7 @@ void Schedule::BuildStationLookupTable(std::string stationData)
     }
 }
 
-void Schedule::BuildTripDataTable(std::string trainsData)
+void Schedule::build_trip_data_table(std::string trainsData)
 {
     std::stringstream lineStream(trainsData);
     
@@ -234,7 +235,7 @@ void Schedule::BuildTripDataTable(std::string trainsData)
     }
 }
 
-int Schedule::PromptStationID() const
+int Schedule::prompt_station_id() const
 {
     std::cout << "Enter station id: ";
     int stationID = Utility::GetIntFromUser();
@@ -247,7 +248,7 @@ int Schedule::PromptStationID() const
     return stationID;
 }
 
-std::pair<int, int> Schedule::PromptStationPairID() const
+std::pair<int, int> Schedule::prompt_station_pair_id() const
 {  
     std::cout << "Enter departure station id: ";
     int departID = Utility::GetIntFromUser();
@@ -270,7 +271,7 @@ std::pair<int, int> Schedule::PromptStationPairID() const
 
 void Schedule::GetDirectRoute()
 {
-    std::pair<int, int> stationPair = PromptStationPairID();
+    std::pair<int, int> stationPair = prompt_station_pair_id();
 
     if(stationGraph->DirectPathExists(stationPair.first, stationPair.second))
     {
@@ -281,6 +282,23 @@ void Schedule::GetDirectRoute()
     else
     {
         std::cout << "Nonstop service is NOT available from " << SimpleStationNameLookup(stationPair.first) << 
+        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
+    }
+}
+
+void Schedule::GetRoute()
+{
+    std::pair<int, int> stationPair = prompt_station_pair_id();
+
+    if(stationGraph->PathExists(stationPair.first, stationPair.second))
+    {
+
+        std::cout << "Service is available from " << SimpleStationNameLookup(stationPair.first) << 
+        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
+    }
+    else
+    {
+        std::cout << "Service is NOT available from " << SimpleStationNameLookup(stationPair.first) << 
         " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
     }
 }
