@@ -148,17 +148,16 @@ bool StationGraph::PathExists(int startStationID, int targetStationID)
         Station currentStation = frontiereQueue.front();
         frontiereQueue.pop();
 
-        if(currentStation.GetID() == targetStation.GetID())
-        {
-            return true;
-        }
-
         for(int i = 0; i < currentStation.GetTripCount(); i++)
         {
             // Store current adjacent node for processing.
             Station adjacentStation = GetStationFromDepartGraph(currentStation.GetTrip(i).destinationID);
 
-
+            // if there is a connection between targetStation and any adjacent node, a path exists from start to target
+            if(adjacentStation.GetID() == targetStation.GetID())
+            {
+                return true;
+            }
 
             // If current adjacent node hasn't already been discovered, add it to frontiere queue and discover it.
             if(!discoveredSet[adjacentStation.GetID() - 1])
