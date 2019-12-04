@@ -6,29 +6,48 @@
 
 class StationGraph{
     public:
-        StationGraph(std::vector<std::vector<std::string>> tripData, int stationsCount);
+        StationGraph(std::vector<std::vector<std::string>> const tripData, int stationsCount);
+        ~StationGraph();
         bool DirectPathExists(int station1ID, int station2ID);
-        const Station GetStation(int stationID);
+        Station GetStationFromDepartGraph(int stationID);
+        Station GetStationFromArrivalGraph(int stationID);
     private:
         const int stationCount;
-        std::vector<Station> stationList;
-        void BuildGraph(std::vector<std::vector<std::string>> tripData);
-        void DebugTestPrint();
+        //Departure graph is the standard graph used for operations concerned with going from a starting node to a
+        // destination node, this is the majority of the functions in the program.
+        std::vector<Station>* departuresGraphList;
+        // Arrivals graph is an inverted version of the graph so that arrivals to a station can be
+        // looked up easily. Only used for a few functions in the program.
+        std::vector<Station>* arrivalsGraphList;
+        void BuildDeparturesGraph(std::vector<std::vector<std::string>> tripData);
+        void BuildArrivalsGraph(std::vector<std::vector<std::string>> tripData);
 };
 
-StationGraph::StationGraph(std::vector<std::vector<std::string>> tripDataTable, int stationsCount) : stationCount(stationsCount)
+StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataTable, int stationsCount) : stationCount(stationsCount)
 {
-    BuildGraph(tripDataTable);
+    BuildDeparturesGraph(tripDataTable);
+    BuildArrivalsGraph(tripDataTable);
 }
 
-void StationGraph::BuildGraph(std::vector<std::vector<std::string>> tripDataTable)
+StationGraph::~StationGraph()
+{
+    if(departuresGraphList) delete departuresGraphList;
+    if(arrivalsGraphList) delete arrivalsGraphList;
+}
+
+void StationGraph::BuildDeparturesGraph(std::vector<std::vector<std::string>> tripDataTable)
 {
     // Use a temporary table to hold all trips so that they
     // can be passed into station constructor.
     // We don't want to allow the addition of new graph elements after construction because we are pre-computing shortest paths
     // so not making any public functions to add nodes or edges.
+    departuresGraphList = new std::vector<Station>;
+
     std::vector<std::vector<Trip>> tempTripTable;
-    tempTripTable.reserve(stationCount);
+    for(int i = 0; i < stationCount; i++)
+    {
+        tempTripTable.push_back({});
+    }
 
     //Add the trip data to tempTripTable array
     for(int i = 0; i < tripDataTable.size(); i++)
@@ -44,18 +63,60 @@ void StationGraph::BuildGraph(std::vector<std::vector<std::string>> tripDataTabl
     //Construct the stations and add trips to graph.
     for(int i = 0; i < stationCount; i++)
     {
-        stationList.push_back({i + 1, tempTripTable[i]});
+        departuresGraphList->push_back({i + 1, tempTripTable[i]});
     }
-
-    //DebugTestPrint();
 }
 
-const Station StationGraph::GetStation(int stationID)
+void StationGraph::BuildArrivalsGraph(std::vector<std::vector<std::string>> tripDataTable)
+{
+    arrivalsGraphList = new std::vector<Station>;
+
+    std::vector<std::vector<Trip>> tempTripTable;
+    for(int i = 0; i < stationCount; i++)
+    {
+        tempTripTable.push_back({});
+    }
+
+    //Add the trip data to tempTripTable array
+    for(int i = 0; i < tripDataTable.size(); i++)
+    {
+        int startID = stoi(tripDataTable[i][1]) - 1;
+        int destinationID = stoi(tripDataTable[i][0]);
+        int arrivalTime = stoi(tripDataTable[i][2]);
+        int departureTime = stoi(tripDataTable[i][3]);
+        int travelTimeMins = (arrivalTime - departureTime);
+        tempTripTable[startID].push_back({destinationID, departureTime, arrivalTime, travelTimeMins});
+    }
+
+    //Construct the stations and add trips to graph.
+    for(int i = 0; i < stationCount; i++)
+    {
+        arrivalsGraphList->push_back({i + 1, tempTripTable[i]});
+    }
+}
+
+Station StationGraph::GetStationFromDepartGraph(int stationID)
 {
     int iDAsZeroIndex = stationID - 1;
-    if(iDAsZeroIndex < stationList.size() && iDAsZeroIndex >= 0)
+    if(iDAsZeroIndex < departuresGraphList->size() && iDAsZeroIndex >= 0)
     {
-        return stationList[iDAsZeroIndex];
+        return (*departuresGraphList)[iDAsZeroIndex];
+    }
+    else
+    {
+        // return invalid station if bad station ID
+        return Station({-1, {}});
+    } 
+}
+
+// Duplication of code between two graph types. Might want to pull this out to be more
+// generic.
+Station StationGraph::GetStationFromArrivalGraph(int stationID)
+{
+    int iDAsZeroIndex = stationID - 1;
+    if(iDAsZeroIndex < arrivalsGraphList->size() && iDAsZeroIndex >= 0)
+    {
+        return (*arrivalsGraphList)[iDAsZeroIndex];
     }
     else
     {
@@ -66,34 +127,14 @@ const Station StationGraph::GetStation(int stationID)
 
 bool StationGraph::DirectPathExists(int station1ID, int station2ID)
 {
-    for(int i = 0; i < GetStation(station1ID).GetTripCount(); i++)
+    for(int i = 0; i < GetStationFromDepartGraph(station1ID).GetTripCount(); i++)
     {
-        if(GetStation(station1ID).GetTrip(i).destinationID == station2ID)
+        if(GetStationFromDepartGraph(station1ID).GetTrip(i).destinationID == station2ID)
         {
             return true;
         }
     }
     return false;
-}
-
-void StationGraph::DebugTestPrint()
-{
-    for(int i = 0; i < stationCount; i++)
-    {
-        std::cout << "Station: " << stationList[i].GetID() << " trips - ";
-        bool multiplePass = false;
-        for(int j = 0; j < stationList[i].GetTripCount(); j++)
-        {
-            if(multiplePass)
-            {
-                std::cout << std::endl;
-                std::cout << "Station: " << stationList[i].GetID() << " trips - ";
-            }
-            std::cout << "Destination: " << stationList[i].GetTrip(j).destinationID << " - Travel Time: " << stationList[i].GetTrip(j).travelTimeMins;
-            multiplePass = true;
-        }
-        std::cout << std::endl;
-    }
 }
 
 

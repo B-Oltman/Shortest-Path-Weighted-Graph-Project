@@ -14,15 +14,16 @@ class Schedule{
         //Destructor - destroy schedule
         ~Schedule();
         //PrintComplete - print schedule for all stations
-        //PrintSelected - print schedule for selected station
-        //LookUpStationId - print station number for given station name
+        //Print schedule for selected station
+        void PrintStationSchedule();
+        //Print station number for given station name
         void LookUpStationId();
 
         //Print station name for given station number
         void LookUpStationName();
         std::string SimpleStationNameLookup(int stationID);
 
-        //GetDirectRoute - returns whether there is a direct route from station A to station B
+        //Returns whether there is a direct route from station A to station B
         void GetDirectRoute();
         //GetRoute - returns whether there is any route from station A to station B
         //TripLengthNoLayover - returns the shortest time to go from A to B with no layovers, else alert to no path
@@ -35,7 +36,8 @@ class Schedule{
         // Builds a lookup table to map station id to station name.
         void BuildStationLookupTable(std::string stationData);
         void BuildTripDataTable(std::string trainsData);
-        std::pair<int, int> PromptStationID() const;
+        int PromptStationID() const;
+        std::pair<int, int> PromptStationPairID() const;
         
 };
 
@@ -51,6 +53,30 @@ Schedule::~Schedule()
     if(stationGraph)
     {
         delete stationGraph;
+    }
+}
+
+void Schedule::PrintStationSchedule()
+{
+    int stationID = PromptStationID();
+    Station station = stationGraph->GetStationFromDepartGraph(stationID);
+    std::cout << "Schedule for " << SimpleStationNameLookup(station.GetID()) << std::endl;
+    for(int i = 0; i < station.GetTripCount(); i++)
+    {
+        int destinationID = station.GetTrip(i).destinationID;
+        int departureTime = station.GetTrip(i).departureTime;
+        int arrivalTime = station.GetTrip(i).arrivalTime;
+        std::cout << "Departure to " << SimpleStationNameLookup(destinationID) << " at " 
+            << departureTime << ", arriving at " << arrivalTime << std::endl;
+    }
+
+    station = stationGraph->GetStationFromArrivalGraph(stationID);
+    for(int i = 0; i < station.GetTripCount(); i++)
+    {
+        int destinationID = station.GetTrip(i).destinationID;
+        int arrivalTime = station.GetTrip(i).departureTime;
+        std::cout << "Arrival from " << SimpleStationNameLookup(destinationID) << " at " 
+            << arrivalTime << std::endl;
     }
 }
 
@@ -103,7 +129,7 @@ void Schedule::LookUpStationName()
     {
         //stationID - 1 maps the input to the corresponding vector entry.
         std::cout << "Station " << stationLookupTable[stationID - 1][0] << " is " << 
-            stationLookupTable[stationID - 1][1] << std::endl;
+            SimpleStationNameLookup(stationID) << std::endl;
     }
     else
     {
@@ -158,11 +184,24 @@ void Schedule::BuildTripDataTable(std::string trainsData)
     }
 }
 
-std::pair<int, int> Schedule::PromptStationID() const
+int Schedule::PromptStationID() const
+{
+    std::cout << "Enter station id: ";
+    int stationID = Utility::GetIntFromUser();
+    while(stationGraph->GetStationFromDepartGraph(stationID).StationIsValid() == false)
+    {
+        std::cout << "Station id invalid, try again: ";
+        stationID = Utility::GetIntFromUser();
+    }
+
+    return stationID;
+}
+
+std::pair<int, int> Schedule::PromptStationPairID() const
 {  
     std::cout << "Enter departure station id: ";
     int departID = Utility::GetIntFromUser();
-    while(stationGraph->GetStation(departID).StationIsValid() == false)
+    while(stationGraph->GetStationFromDepartGraph(departID).StationIsValid() == false)
     {
         std::cout << "Departure station id invalid, try again: ";
         departID = Utility::GetIntFromUser();
@@ -170,7 +209,7 @@ std::pair<int, int> Schedule::PromptStationID() const
 
     std::cout << "Enter destination station id: ";
     int destID = Utility::GetIntFromUser();
-    while(stationGraph->GetStation(destID).StationIsValid() == false)
+    while(stationGraph->GetStationFromDepartGraph(destID).StationIsValid() == false)
     {
         std::cout << "Destination station id invalid, try again: ";
         destID = Utility::GetIntFromUser();
@@ -181,7 +220,7 @@ std::pair<int, int> Schedule::PromptStationID() const
 
 void Schedule::GetDirectRoute()
 {
-    std::pair<int, int> stationPair = PromptStationID();
+    std::pair<int, int> stationPair = PromptStationPairID();
 
     if(stationGraph->DirectPathExists(stationPair.first, stationPair.second))
     {

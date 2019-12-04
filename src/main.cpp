@@ -8,6 +8,14 @@
 #include "schedule.hpp"
 
 using namespace std;
+/*******************GENERAL TO DOS*******************************
+ * TODO(baruch): Handle adding leading 0 to times that are under 4 wide 850 -> 0850
+ * 
+ * 
+ * 
+ * 
+ * **************************************************************/
+
 
 int main(int argc, char** argv)
 {
@@ -36,6 +44,7 @@ int main(int argc, char** argv)
     Utility::PrintMainMenu();
 
     bool quit = false;
+
     while(!quit)
     {
         std::cout << "Enter choice: ";
@@ -53,6 +62,7 @@ int main(int argc, char** argv)
             case 1:
                 break;
             case 2:
+                trainSchedule.PrintStationSchedule();
                 break;
             case 3:
                 trainSchedule.LookUpStationId();
