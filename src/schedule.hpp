@@ -15,8 +15,10 @@ class Schedule{
         ~Schedule();
         //Print schedule for all stations
         void PrintCompleteSchedule();
-        //Print schedule for selected station
+
+        //Print schedule for selected station no arguments is overloaded to prompt for input
         void PrintStationSchedule();
+        // int argument does not prompt user, iD must be passed in.
         void PrintStationSchedule(int stationID);
 
         //Print station number for given station name
@@ -120,6 +122,11 @@ void Schedule::PrintStationSchedule(int stationID)
                 << arrivalTime << std::endl;
         }
     }
+    else
+    {
+        std::cout << "There was a problem with the input\nin PrintStationSchedule, please try again.\n";
+    }
+    
     
 }
 
