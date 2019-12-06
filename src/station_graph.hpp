@@ -132,9 +132,9 @@ void StationGraph::floyd_warshal_shortest_paths()
             int tripWeight = currentStation.GetTrip(j).travelTimeMins;
             std::cout << tripWeight << "-" << "-" << i << j << std::endl;
             int startID = i;
-            int destinationID = currentStation.GetTrip(j).destinationID;
+            int destinationID = currentStation.GetTrip(j).destinationID - 1;
             distance[startID][destinationID] = tripWeight;
-            (*shortestPathSequenceTable).at(startID).at(destinationID) = destinationID;
+            (*shortestPathSequenceTable).at(startID).at(destinationID) = destinationID + 1;
         }
     }
 
@@ -145,7 +145,6 @@ void StationGraph::floyd_warshal_shortest_paths()
         {
             for(int j = 0; j < stationCount; j++)
             {
-                std::cout << k << "-" << i << "-" << j << " - " << distance[i][k] << " + " << distance[k][j] << " = " << distance[i][k] + distance[k][j] << " < " << distance[i][j] << "? \n";
                 if(distance[i][k] != INF && distance[k][j] != INF &&
                     distance[i][k] + distance[k][j] < distance[i][j])
                     {
