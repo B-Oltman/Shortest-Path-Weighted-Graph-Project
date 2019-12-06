@@ -13,6 +13,8 @@ class StationGraph{
         bool PathExists(int startStationID, int targetStationID);
         Station GetStationFromDepartGraph(int stationID);
         Station GetStationFromArrivalGraph(int stationID);
+        int GetVertexCount();
+        void DebugTestPrintShortPaths();
     private:
         const int stationCount;
         //Departure graph is the standard graph used for operations concerned with going from a starting node to a
@@ -21,20 +23,37 @@ class StationGraph{
         // Arrivals graph is an inverted version of the graph so that arrivals to a station can be
         // looked up easily. Only used for a few functions in the program.
         std::vector<Station>* arrivalsGraphList;
+        std::vector<std::vector<int>>* shortestPathSequenceTable;
+        void floyd_warshal_shortest_paths();
         void build_departures_graph(std::vector<std::vector<std::string>> tripData);
         void build_arrivals_graph(std::vector<std::vector<std::string>> tripData);
+
 };
+
+void StationGraph::DebugTestPrintShortPaths()
+{
+    for(int i = 0; i < stationCount; i++)
+    {
+        for(int j = 0; j < stationCount; j++)
+        {
+            std::cout << (*shortestPathSequenceTable).at(i).at(j) << " ";
+        }
+        std::cout << std::endl;
+    }
+}
 
 StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataTable, int stationsCount) : stationCount(stationsCount)
 {
     build_departures_graph(tripDataTable);
     build_arrivals_graph(tripDataTable);
+    floyd_warshal_shortest_paths();
 }
 
 StationGraph::~StationGraph()
 {
     if(departuresGraphList) delete departuresGraphList;
     if(arrivalsGraphList) delete arrivalsGraphList;
+    if(shortestPathSequenceTable) delete shortestPathSequenceTable;
 }
 
 void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> tripDataTable)
@@ -95,6 +114,54 @@ void StationGraph::build_arrivals_graph(std::vector<std::vector<std::string>> tr
     {
         arrivalsGraphList->push_back({i + 1, tempTripTable[i]});
     }
+}
+
+void StationGraph::floyd_warshal_shortest_paths()
+{
+    const int INF = Utility::INF;
+    // Construct adjacency matrix from adjacencyList. If value == INF, no path exists between start and end index.
+    std::vector<std::vector<int>> distance(stationCount, std::vector<int>(stationCount, INF));
+    // Sequence table to store shortest paths for future operations.
+    shortestPathSequenceTable = new std::vector<std::vector<int>>(stationCount, std::vector<int>(stationCount, 0));
+
+    for(int i = 0; i < stationCount; i++)
+    {
+        Station currentStation = (*departuresGraphList)[i];
+        for(int j = 0; j < currentStation.GetTripCount(); j++)
+        {
+            int tripWeight = currentStation.GetTrip(j).travelTimeMins;
+            std::cout << tripWeight << "-" << "-" << i << j << std::endl;
+            int startID = i;
+            int destinationID = currentStation.GetTrip(j).destinationID;
+            distance[startID][destinationID] = tripWeight;
+            (*shortestPathSequenceTable).at(startID).at(destinationID) = destinationID;
+        }
+    }
+
+    //Floyd Warshall Algorithm
+    for(int k = 0; k < stationCount; k++)
+    {
+        for(int i = 0; i < stationCount; i++)
+        {
+            for(int j = 0; j < stationCount; j++)
+            {
+                std::cout << k << "-" << i << "-" << j << " - " << distance[i][k] << " + " << distance[k][j] << " = " << distance[i][k] + distance[k][j] << " < " << distance[i][j] << "? \n";
+                if(distance[i][k] != INF && distance[k][j] != INF &&
+                    distance[i][k] + distance[k][j] < distance[i][j])
+                    {
+                        distance[i][j] = distance[i][k] + distance[k][j];
+                        // Update shortest path table to reflect new shorter node.
+                        (*shortestPathSequenceTable).at(i).at(j) = (*shortestPathSequenceTable).at(i).at(k);
+                    }
+            }
+        }
+    }
+
+}
+
+int StationGraph::GetVertexCount()
+{
+    return stationCount;
 }
 
 Station StationGraph::GetStationFromDepartGraph(int stationID)

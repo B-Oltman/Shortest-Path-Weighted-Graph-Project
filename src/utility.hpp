@@ -9,6 +9,7 @@ class Utility{
         static bool CompareStringsNoCase(const std::string& s1, const std::string& s2);
         static int GetIntFromUser();
         static void PrintMainMenu();
+        static const int INF = std::numeric_limits<int>::max();
 };
 
 void Utility::ClearInStream()

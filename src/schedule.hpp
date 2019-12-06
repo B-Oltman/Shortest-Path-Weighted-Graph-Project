@@ -32,7 +32,8 @@ class Schedule{
         void GetDirectRoute();
         //GetRoute - returns whether there is any route from station A to station B
         void GetRoute();
-        //TripLengthNoLayover - returns the shortest time to go from A to B with no layovers, else alert to no path
+        //Returns the shortest time to go from A to B with layover time excluded, else alert to no path
+        void ShortestTripLengthRideTime();
         //TripLengthYesLayover - returns the shortest time to go from A to B, layovers are allowed, else alert user to no path
         //TripLengthGivenTime - returns the shortest time to go from A to B when departing at a specific time only. 
     private:
@@ -199,6 +200,11 @@ void Schedule::LookUpStationName()
             wait = false;
         }
     }
+}
+
+void Schedule::ShortestTripLengthRideTime()
+{
+    stationGraph->DebugTestPrintShortPaths();
 }
 
 void Schedule::build_station_lookup_table(std::string stationData)
