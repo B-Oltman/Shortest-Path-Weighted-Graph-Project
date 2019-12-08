@@ -13,6 +13,7 @@ class StationGraph{
         bool PathExists(int startStationID, int targetStationID);
         Station GetStationFromDepartGraph(int stationID);
         Station GetStationFromArrivalGraph(int stationID);
+        std::vector<Trip> GetShortestRoute(int departureID, int destinationID);
         int GetVertexCount();
         void DebugTestPrintShortPaths();
     private:
@@ -130,9 +131,10 @@ void StationGraph::floyd_warshal_shortest_paths()
         for(int j = 0; j < currentStation.GetTripCount(); j++)
         {
             int tripWeight = currentStation.GetTrip(j).travelTimeMins;
-            std::cout << tripWeight << "-" << "-" << i << j << std::endl;
+
             int startID = i;
             int destinationID = currentStation.GetTrip(j).destinationID - 1;
+
             distance[startID][destinationID] = tripWeight;
             (*shortestPathSequenceTable).at(startID).at(destinationID) = destinationID + 1;
         }
@@ -156,6 +158,38 @@ void StationGraph::floyd_warshal_shortest_paths()
         }
     }
 
+}
+
+std::vector<Trip> StationGraph::GetShortestRoute(int departureID, int destinationID)
+{
+    std::vector<Trip> shortPath;
+    
+    int nextStopID = departureID;
+    bool endOfPath = false;
+
+    while(!endOfPath)
+    {                     
+        Station currentNode = GetStationFromDepartGraph(nextStopID);
+        if(currentNode.StationIsValid())
+        {            
+            nextStopID = (*shortestPathSequenceTable).at(nextStopID - 1).at(destinationID - 1);            
+            if(currentNode.GetID() == destinationID || nextStopID == 0)
+            {                
+                endOfPath = true;
+            }
+            else
+            {                               
+                Trip nextTrip = currentNode.FindTripByDestination(nextStopID);                
+                shortPath.push_back(nextTrip);       
+            }                       
+        }
+        else
+        {
+            return {};
+        }        
+    }
+
+    return shortPath;
 }
 
 int StationGraph::GetVertexCount()

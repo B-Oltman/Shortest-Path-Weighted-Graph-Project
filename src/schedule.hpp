@@ -5,6 +5,7 @@
 #include <sstream>
 #include <iostream>
 #include "station_graph.hpp"
+#include "trip.hpp"
 #include "utility.hpp"
 
 class Schedule{
@@ -204,7 +205,25 @@ void Schedule::LookUpStationName()
 
 void Schedule::ShortestTripLengthRideTime()
 {
-    stationGraph->DebugTestPrintShortPaths();
+    std::pair<int, int> stationPair = prompt_station_pair_id();
+    std::vector<Trip> tripRoute = stationGraph->GetShortestRoute(stationPair.first, stationPair.second);
+
+    if(tripRoute.size() > 0)
+    {
+        std::cout << "First Trip Travel Time: " << tripRoute[0].travelTimeMins << std::endl;
+        int totalTripMins;
+        for(Trip trip : tripRoute)
+        {            
+            totalTripMins += trip.travelTimeMins;
+        }
+
+        std::cout << "Riding time to go from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " is " 
+        << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes.\n";        
+    }
+    else
+    {
+        std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << ".\n";
+    }
 }
 
 void Schedule::build_station_lookup_table(std::string stationData)
