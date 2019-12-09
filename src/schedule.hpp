@@ -79,7 +79,7 @@ void Schedule::PrintCompleteSchedule()
 void Schedule::PrintStationSchedule()
 {
     int stationID = prompt_station_id();
-    Station station = stationGraph->GetStationFromDepartGraph(stationID);
+    Station station = stationGraph->GetStationFromGraph(stationID);
     std::cout << "Schedule for " << SimpleStationNameLookup(station.GetID()) << std::endl;
     for(int i = 0; i < station.GetTripCount(); i++)
     {
@@ -102,7 +102,7 @@ void Schedule::PrintStationSchedule()
 
 void Schedule::PrintStationSchedule(int stationID)
 {
-    Station station = stationGraph->GetStationFromDepartGraph(stationID);
+    Station station = stationGraph->GetStationFromGraph(stationID);
 
     if(station.StationIsValid())
     {
@@ -264,7 +264,7 @@ int Schedule::prompt_station_id() const
 {
     std::cout << "Enter station id: ";
     int stationID = Utility::GetIntFromUser();
-    while(stationGraph->GetStationFromDepartGraph(stationID).StationIsValid() == false)
+    while(stationGraph->GetStationFromGraph(stationID).StationIsValid() == false)
     {
         std::cout << "Station id invalid, try again: ";
         stationID = Utility::GetIntFromUser();
@@ -277,7 +277,7 @@ std::pair<int, int> Schedule::prompt_station_pair_id() const
 {  
     std::cout << "Enter departure station id: ";
     int departID = Utility::GetIntFromUser();
-    while(stationGraph->GetStationFromDepartGraph(departID).StationIsValid() == false)
+    while(stationGraph->GetStationFromGraph(departID).StationIsValid() == false)
     {
         std::cout << "Departure station id invalid, try again: ";
         departID = Utility::GetIntFromUser();
@@ -285,7 +285,7 @@ std::pair<int, int> Schedule::prompt_station_pair_id() const
 
     std::cout << "Enter destination station id: ";
     int destID = Utility::GetIntFromUser();
-    while(stationGraph->GetStationFromDepartGraph(destID).StationIsValid() == false)
+    while(stationGraph->GetStationFromGraph(destID).StationIsValid() == false)
     {
         std::cout << "Destination station id invalid, try again: ";
         destID = Utility::GetIntFromUser();

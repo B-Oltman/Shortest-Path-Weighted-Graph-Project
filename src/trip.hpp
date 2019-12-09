@@ -6,3 +6,10 @@ struct Trip {
     int arrivalTime;
     int travelTimeMins;
 };
+
+struct TripPlusLayover{
+    int destinationID;
+    int rideTimeToDestinationMins;
+    int layoverAtDestinationMins;
+    int tripWeight;
+};
