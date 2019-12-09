@@ -135,6 +135,8 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
                             tempTripTable[k].first.first = departureTime;
                             tempTripTable[k].first.second = stoi(tripDataTable[j][0]);
                             tempTripTable[k].second.push_back({destinationID, rideTimeToDestination, layoverAtDestination, totalTripTime});
+                            //For every valid edge, an edge must be added without layover, this handles the shortest path case when next station is final arrival.
+                            tempTripTable[k].second.push_back({destinationID, rideTimeToDestination, 0, rideTimeToDestination});
                         }
                     }
                 }
