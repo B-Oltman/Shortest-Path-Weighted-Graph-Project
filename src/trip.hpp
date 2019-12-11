@@ -8,7 +8,7 @@ struct Trip {
 };
 
 struct TripPlusLayover{
-    int destinationID;
+    int destinationKey;
     int rideTimeToDestinationMins;
     int layoverAtDestinationMins;
     int tripWeight;

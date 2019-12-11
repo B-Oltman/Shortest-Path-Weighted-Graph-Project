@@ -8,7 +8,7 @@ class Departure {
         int GetTripCount() const;
         int GetLookUpKey() const;
         TripPlusLayover GetTrip(int tripIndex) const;
-        TripPlusLayover FindTripByDestination(int destinationID);
+        TripPlusLayover FindTripByDestinationKey(int destinationKey);
         bool DepartureIsValid() const;
         Departure(std::vector<TripPlusLayover> tripArray, int ID, int key, int departure);
     private:
@@ -36,11 +36,11 @@ int Departure::GetLookUpKey() const
     return lookUpKey;
 }
 
-TripPlusLayover Departure::FindTripByDestination(int destinationID)
+TripPlusLayover Departure::FindTripByDestinationKey(int destinationKey)
 {
     for(TripPlusLayover trip : validTrips)
     {
-        if(trip.destinationID == destinationID)
+        if(trip.destinationKey == destinationKey)
         {
             return trip;
         }

@@ -60,16 +60,16 @@ StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataT
     for(int i = 0; i < departureGraphList->size(); i++)
     {
         Departure station = (*departureGraphList)[i];
-        std::cout << "Vertex: " << station.GetStationID() << ":\n";
+        std::cout << "Vertex: " << station.GetLookUpKey() << ":\n";
         for(int j = 0; j < station.GetTripCount(); j++)
         {
             TripPlusLayover trip = station.GetTrip(j);
-            std::cout << "  Destination ID: " << trip.destinationID << " Trip Weight: " << trip.tripWeight << std::endl;
+            std::cout << "  Destination ID: " << trip.destinationKey << " Trip Weight: " << trip.tripWeight << std::endl;
         }
     }
     //END DEBUG PRINTING
     
-    //floyd_warshal_shortest_paths_include_layovers();
+    floyd_warshal_shortest_paths_include_layovers();
 }
 
 StationGraph::~StationGraph()
@@ -118,18 +118,27 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
     departureGraphList = new std::vector<Departure>;
     std::vector<std::pair<std::pair<int, int>, std::vector<TripPlusLayover>>> tempTripTable;
 
-    for(int i = 0; i < (tripDataTable.size() * 2); i++)
+    for(int i = 0; i < (tripDataTable.size()); i++)
     {
         tempTripTable.push_back({});
     }
 
-    for(int i = 0; i < (tripDataTable.size()); i++)
-    {
-        int destinationID = stoi(tripDataTable[i][1]);
+    for(int i = 0; i < tripDataTable.size(); i++)
+    {        
+        int destinationKey;
         int departureTime = stoi(tripDataTable[i][2]);
         int rideTimeToDestination = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
         int layoverAtDestination = 0; // this node marks end of trip, no layover added.
         int totalTripTime = rideTimeToDestination + layoverAtDestination;
+
+        // Map trip target station id to the lookUpKey of the vertex.
+        for(int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
+        {
+            if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[i][2]))
+            {                
+                destinationKey = keyIndx;
+            }
+        }
 
         for(int k = 0; k < tripDataTable.size(); k++)
         {
@@ -137,8 +146,8 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
             if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2]))
             {
                 tempTripTable[k].first.first = departureTime;
-                tempTripTable[k].first.second = stoi(tripDataTable[k][0]);
-                tempTripTable[k].second.push_back({destinationID, rideTimeToDestination, layoverAtDestination, totalTripTime});                
+                tempTripTable[k].first.second = stoi(tripDataTable[i][0]);
+                tempTripTable[k].second.push_back({destinationKey, rideTimeToDestination, layoverAtDestination, totalTripTime});                
             }
         }
         
@@ -149,12 +158,20 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
             if(tripDataTable[i][1] == tripDataTable[j][0])
             {
                 if(tripDataTable[i][3] < tripDataTable[j][2])
-                {
-                    destinationID = stoi(tripDataTable[j][0]);
+                {                    
                     departureTime = stoi(tripDataTable[j][2]);
                     rideTimeToDestination = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
                     layoverAtDestination = stoi(tripDataTable[j][2]) - stoi(tripDataTable[i][3]);
                     totalTripTime = rideTimeToDestination + layoverAtDestination;
+
+                    // Map trip ID to its corresponding key value for easy look up.
+                    for(int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
+                    {
+                        if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[j][0]) && stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[j][2]))
+                        {
+                            destinationKey = keyIndx;
+                        }
+                    }
                     
                     // Search adjacency list for matching vertex to insert new edge data. Can't be a simple index with current setup.
                     // This is the only time this search must happen because when the graph is created, each departure is assigned a lookupKey that can be used
@@ -165,8 +182,8 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
                         if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2]))
                         {                        
                             tempTripTable[k].first.first = departureTime;
-                            tempTripTable[k].first.second = stoi(tripDataTable[j][0]);
-                            tempTripTable[k].second.push_back({destinationID, rideTimeToDestination, layoverAtDestination, totalTripTime});
+                            tempTripTable[k].first.second = stoi(tripDataTable[i][0]);
+                            tempTripTable[k].second.push_back({destinationKey, rideTimeToDestination, layoverAtDestination, totalTripTime});
                         }
                     }
                 }
@@ -261,30 +278,38 @@ void StationGraph::floyd_warshal_shortest_paths_include_layovers()
 {
     const int INF = Utility::INF;
     // Construct adjacency matrix from adjacencyList. If value == INF, no path exists between start and end index.
-    std::vector<std::vector<int>> distance(departureGraphList->size(), std::vector<int>(stationCount, INF));
+    std::vector<std::vector<int>> distance(departureGraphList->size(), std::vector<int>(departureGraphList->size(), INF));
     // Sequence table to store shortest paths for future operations.
-    shortestPathWithLayoverSequenceTable = new std::vector<std::vector<int>>(departureGraphList->size(), std::vector<int>(stationCount, 0));
+    shortestPathWithLayoverSequenceTable = new std::vector<std::vector<int>>(departureGraphList->size(), std::vector<int>(departureGraphList->size(), 0));
 
     for(int i = 0; i < departureGraphList->size(); i++)
     {
-        Departure currentDeparture = (*departureGraphList)[i];
-        for(int j = 0; j < currentDeparture.GetTripCount(); j++)
+        Departure currentDeparture = (*departureGraphList)[i];        
+        if(currentDeparture.GetTripCount() == 0)
         {
-            int tripWeight = currentDeparture.GetTrip(j).tripWeight;
-            int startID = currentDeparture.GetLookUpKey();
-            int destinationID = currentDeparture.GetTrip(j).destinationID - 1;            
-
-            distance[startID][destinationID] = tripWeight;
-            (*shortestPathWithLayoverSequenceTable).at(startID).at(destinationID) = destinationID + 1;
+            // this is a terminating vertex.
+            continue;
         }
+        else
+        {
+            for(int j = 0; j < currentDeparture.GetTripCount(); j++)
+            {
+                int tripWeight = currentDeparture.GetTrip(j).tripWeight;
+                int startID = currentDeparture.GetLookUpKey();                
+                int destinationID = currentDeparture.GetTrip(j).destinationKey;            
+
+                distance[startID][destinationID] = tripWeight;
+                (*shortestPathWithLayoverSequenceTable).at(startID).at(destinationID) = destinationID;
+            }   
+        }            
     }
 
     //Floyd Warshal Algorithm
-    for(int k = 0; k < stationCount; k++)
+    for(int k = 0; k < departureGraphList->size(); k++)
     {
-        for(int i = 0; i < stationCount; i++)
+        for(int i = 0; i < departureGraphList->size(); i++)
         {
-            for(int j = 0; j < stationCount; j++)
+            for(int j = 0; j < departureGraphList->size(); j++)
             {
                 if(distance[i][k] != INF && distance[k][j] != INF &&
                     distance[i][k] + distance[k][j] < distance[i][j])
