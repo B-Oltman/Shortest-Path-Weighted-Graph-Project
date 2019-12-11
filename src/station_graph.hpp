@@ -54,7 +54,22 @@ StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataT
     build_station_arrivals_graph(tripDataTable);
     build_departures_graph(tripDataTable);
     floyd_warshal_shortest_paths();
-    floyd_warshal_shortest_paths_include_layovers();
+    
+    //DEBUG PRINTING
+    std::cout << "\n*****DEPARTURE GRAPH TEST in floyd warshal shortest path include layovers function*****\n";
+    for(int i = 0; i < departureGraphList->size(); i++)
+    {
+        Departure station = (*departureGraphList)[i];
+        std::cout << "Vertex: " << station.GetStationID() << ":\n";
+        for(int j = 0; j < station.GetTripCount(); j++)
+        {
+            TripPlusLayover trip = station.GetTrip(j);
+            std::cout << "  Destination ID: " << trip.destinationID << " Trip Weight: " << trip.tripWeight << std::endl;
+        }
+    }
+    //END DEBUG PRINTING
+    
+    //floyd_warshal_shortest_paths_include_layovers();
 }
 
 StationGraph::~StationGraph()
@@ -103,40 +118,55 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
     departureGraphList = new std::vector<Departure>;
     std::vector<std::pair<std::pair<int, int>, std::vector<TripPlusLayover>>> tempTripTable;
 
-    for(int i = 0; i < tripDataTable.size(); i++)
+    for(int i = 0; i < (tripDataTable.size() * 2); i++)
     {
         tempTripTable.push_back({});
     }
 
-    for(int i = 0; i < tripDataTable.size(); i++)
+    for(int i = 0; i < (tripDataTable.size()); i++)
     {
+        int destinationID = stoi(tripDataTable[i][1]);
+        int departureTime = stoi(tripDataTable[i][2]);
+        int rideTimeToDestination = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
+        int layoverAtDestination = 0; // this node marks end of trip, no layover added.
+        int totalTripTime = rideTimeToDestination + layoverAtDestination;
+
+        for(int k = 0; k < tripDataTable.size(); k++)
+        {
+            //If the target edge departure time and departure station match, this is the correct insertion point, add edge to adjacency list.
+            if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2]))
+            {
+                tempTripTable[k].first.first = departureTime;
+                tempTripTable[k].first.second = stoi(tripDataTable[k][0]);
+                tempTripTable[k].second.push_back({destinationID, rideTimeToDestination, layoverAtDestination, totalTripTime});                
+            }
+        }
+        
         for(int j = 0; j < tripDataTable.size(); j++)
         {
             // skip current index
             if(j == i) continue;
-
-            if(tripDataTable[i][0] == tripDataTable[j][0])
+            if(tripDataTable[i][1] == tripDataTable[j][0])
             {
                 if(tripDataTable[i][3] < tripDataTable[j][2])
                 {
-                    int destinationID = stoi(tripDataTable[j][1]);
-                    int departureTime = stoi(tripDataTable[j][2]);
-                    int rideTimeToDestination = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
-                    int layoverAtDestination = stoi(tripDataTable[j][3]) - stoi(tripDataTable[i][3]);
-                    int totalTripTime = rideTimeToDestination + layoverAtDestination;
+                    destinationID = stoi(tripDataTable[j][0]);
+                    departureTime = stoi(tripDataTable[j][2]);
+                    rideTimeToDestination = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
+                    layoverAtDestination = stoi(tripDataTable[j][2]) - stoi(tripDataTable[i][3]);
+                    totalTripTime = rideTimeToDestination + layoverAtDestination;
                     
                     // Search adjacency list for matching vertex to insert new edge data. Can't be a simple index with current setup.
-                    // May be wise to replace this with a sorting and binary search eventually.
+                    // This is the only time this search must happen because when the graph is created, each departure is assigned a lookupKey that can be used
+                    // to index the list and match the vertex.
                     for(int k = 0; k < tripDataTable.size(); k++)
                     {
                         //If the target edge departure time and departure station match, this is the correct insertion point, add edge to adjacency list.
-                        if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[j][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[j][2]))
-                        {
+                        if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2]))
+                        {                        
                             tempTripTable[k].first.first = departureTime;
                             tempTripTable[k].first.second = stoi(tripDataTable[j][0]);
                             tempTripTable[k].second.push_back({destinationID, rideTimeToDestination, layoverAtDestination, totalTripTime});
-                            //For every valid edge, an edge must be added without layover, this handles the shortest path case when next station is final arrival.
-                            tempTripTable[k].second.push_back({destinationID, rideTimeToDestination, 0, rideTimeToDestination});
                         }
                     }
                 }
@@ -144,10 +174,16 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
         }
     }
 
-    // Populte the departure graph using data from tempTripTable.
+    // Populate the departure graph using data from tempTripTable.
     for(int i = 0; i < tempTripTable.size(); i++)
     {
-        departureGraphList->push_back({tempTripTable[i].second, i, tempTripTable[i].first.second, tempTripTable[i].first.first});
+        departureGraphList->push_back({tempTripTable[i].second, tempTripTable[i].first.second, i, tempTripTable[i].first.first});
+    }
+
+    // Populate terminating arrival nodes, required for shortest path algortithm
+    for(int i = tripDataTable.size(); i < (tripDataTable.size() * 2); i++)
+    {
+       departureGraphList->push_back({{}, stoi(tripDataTable[i - tripDataTable.size()][0]), i, 0});     
     } 
 }
 
@@ -223,7 +259,46 @@ void StationGraph::floyd_warshal_shortest_paths()
 
 void StationGraph::floyd_warshal_shortest_paths_include_layovers()
 {
+    const int INF = Utility::INF;
+    // Construct adjacency matrix from adjacencyList. If value == INF, no path exists between start and end index.
+    std::vector<std::vector<int>> distance(departureGraphList->size(), std::vector<int>(stationCount, INF));
+    // Sequence table to store shortest paths for future operations.
+    shortestPathWithLayoverSequenceTable = new std::vector<std::vector<int>>(departureGraphList->size(), std::vector<int>(stationCount, 0));
+
+    for(int i = 0; i < departureGraphList->size(); i++)
+    {
+        Departure currentDeparture = (*departureGraphList)[i];
+        for(int j = 0; j < currentDeparture.GetTripCount(); j++)
+        {
+            int tripWeight = currentDeparture.GetTrip(j).tripWeight;
+            int startID = currentDeparture.GetLookUpKey();
+            int destinationID = currentDeparture.GetTrip(j).destinationID - 1;            
+
+            distance[startID][destinationID] = tripWeight;
+            (*shortestPathWithLayoverSequenceTable).at(startID).at(destinationID) = destinationID + 1;
+        }
+    }
+
+    //Floyd Warshal Algorithm
+    for(int k = 0; k < stationCount; k++)
+    {
+        for(int i = 0; i < stationCount; i++)
+        {
+            for(int j = 0; j < stationCount; j++)
+            {
+                if(distance[i][k] != INF && distance[k][j] != INF &&
+                    distance[i][k] + distance[k][j] < distance[i][j])
+                    {
+                        distance[i][j] = distance[i][k] + distance[k][j];
+                        // Update shortest path table to reflect new shorter node.
+                        (*shortestPathSequenceTable).at(i).at(j) = (*shortestPathSequenceTable).at(i).at(k);
+                    }
+            }
+        }
+    }
+
 }
+
 
 std::vector<Trip> StationGraph::GetShortestRoute(int departureID, int destinationID)
 {
