@@ -44,7 +44,7 @@ StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataT
     build_departures_graph(tripDataTable);
     floyd_warshal_shortest_paths(true);
     
-    /*//DEBUG PRINTING
+    //DEBUG PRINTING
     std::cout << "\n*****DEPARTURE GRAPH TEST in floyd warshal shortest path include layovers function*****\n";
     for(int i = 0; i < departureGraphList->size(); i++)
     {
@@ -56,7 +56,17 @@ StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataT
             std::cout << "  Destination ID: " << trip.destinationKey << " Trip Weight: " << trip.tripWeight << std::endl;
         }
     }
-    //END DEBUG PRINTING*/
+
+    std::cout << "SEQUENCE TABLE TEST LAYOVER INCLUDED***************************\n";
+    for(int i = 0; i < shortestRouteWithLayoverSequenceTable->size(); i++)
+    {
+        for(int j = 0; j < shortestRouteWithLayoverSequenceTable->size(); j++)
+        {
+            std::cout << (*shortestRouteWithLayoverSequenceTable).at(i).at(j) << " ";
+        }
+        std::cout << std::endl;
+    }
+    //END DEBUG PRINTING
 }
 
 StationGraph::~StationGraph()
@@ -122,8 +132,9 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
         for(int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
         {
             if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[i][2]))
-            {                
-                destinationKey = keyIndx;
+            {   
+                // Map terminating destinations to the appropriate keys at the end of the look up table.             
+                destinationKey = stoi(tripDataTable[keyIndx][1]) + (tripDataTable.size() - 1);
             }
         }
 
@@ -314,24 +325,27 @@ void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
 
     for(int i = 0; i < departureGraphList->size(); i++)
     {
-        Departure currentDeparture = (*departureGraphList)[i];        
-        if(currentDeparture.GetTripCount() == 0)
-        {
-            // this is a terminating vertex.
-            continue;
-        }
-        else
-        {
-            for(int j = 0; j < currentDeparture.GetTripCount(); j++)
-            {
-                int tripWeight = currentDeparture.GetTrip(j).tripWeight;
-                int startID = currentDeparture.GetLookUpKey();                
-                int destinationID = currentDeparture.GetTrip(j).destinationKey;            
+        Departure currentDeparture = (*departureGraphList)[i];
 
-                distance[startID][destinationID] = tripWeight;
-                (*shortestRouteTable).at(startID).at(destinationID) = destinationID;
-            }   
-        }            
+        for (int j = 0; j < currentDeparture.GetTripCount(); j++)
+        {
+            int startID = currentDeparture.GetLookUpKey();
+            int tripWeight = currentDeparture.GetTrip(j).tripWeight;            
+            int destinationID = currentDeparture.GetTrip(j).destinationKey;
+
+            distance[startID][destinationID] = tripWeight;
+            (*shortestRouteTable).at(startID).at(destinationID) = destinationID;
+        }
+    }
+
+    std::cout << "DISTANCE TABLE TEST******************\n";
+    for(int i = 0; i < distance.size(); i++)
+    {
+        for(int j = 0; j < distance.size(); j++)
+        {
+            std::cout << distance[i][j] << " ";
+        }
+        std::cout << std::endl;
     }
 
     //Floyd Warshal Algorithm
