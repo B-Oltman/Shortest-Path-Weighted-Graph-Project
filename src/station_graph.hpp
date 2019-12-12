@@ -44,30 +44,6 @@ StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataT
     build_station_arrivals_graph(tripDataTable);
     build_departures_graph(tripDataTable, stationDataTable);
     floyd_warshal_shortest_paths(true);
-    
-    //DEBUG PRINTING
-    std::cout << "\n*****DEPARTURE GRAPH TEST in floyd warshal shortest path include layovers function*****\n";
-    for(int i = 0; i < departureGraphList->size(); i++)
-    {
-        Departure station = (*departureGraphList)[i];
-        std::cout << "Vertex: " << station.GetLookUpKey() << ":\n";
-        for(int j = 0; j < station.GetTripCount(); j++)
-        {
-            TripPlusLayover trip = station.GetTrip(j);
-            std::cout << "  Destination ID: " << trip.destinationKey << " Trip Weight: " << trip.tripWeight << std::endl;
-        }
-    }
-
-    std::cout << "SEQUENCE TABLE TEST LAYOVER INCLUDED***************************\n";
-    for(int i = 0; i < shortestRouteWithLayoverSequenceTable->size(); i++)
-    {
-        for(int j = 0; j < shortestRouteWithLayoverSequenceTable->size(); j++)
-        {
-            std::cout << (*shortestRouteWithLayoverSequenceTable).at(i).at(j) << " ";
-        }
-        std::cout << std::endl;
-    }
-    //END DEBUG PRINTING
 }
 
 StationGraph::~StationGraph()
@@ -361,16 +337,6 @@ void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
         }
     }
 
-    std::cout << "DISTANCE TABLE TEST******************\n";
-    for(int i = 0; i < distance.size(); i++)
-    {
-        for(int j = 0; j < distance.size(); j++)
-        {
-            std::cout << distance[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
     //Floyd Warshal Algorithm
     for(int k = 0; k < departureGraphList->size(); k++)
     {
@@ -440,46 +406,7 @@ Station StationGraph::GetStationFromArrivalGraph(int stationID)
 
 bool StationGraph::PathExists(int startStationID, int targetStationID)
 {
-    Station startStation = GetStationFromGraph(startStationID);
-    Station targetStation = GetStationFromGraph(targetStationID);
-
-    if(!startStation.StationIsValid() || !targetStation.StationIsValid())
-    {
-        std::cout << "Invalid station, please try again.\n";
-        return false;
-    }
-    std::vector<bool> discoveredSet(stationCount, false);
-    std::queue<Station> frontiereQueue;
-
-    discoveredSet[startStation.GetID() - 1] = true;
-    frontiereQueue.push(startStation);
-
-    while(!frontiereQueue.empty())
-    {
-        Station currentStation = frontiereQueue.front();
-        frontiereQueue.pop();
-
-        for(int i = 0; i < currentStation.GetTripCount(); i++)
-        {
-            // Store current adjacent node for processing.
-            Station adjacentStation = GetStationFromGraph(currentStation.GetTrip(i).destinationID);
-
-            // if there is a connection between targetStation and any adjacent node, a path exists from start to target
-            if(adjacentStation.GetID() == targetStation.GetID())
-            {
-                return true;
-            }
-
-            // If current adjacent node hasn't already been discovered, add it to frontiere queue and discover it.
-            if(!discoveredSet[adjacentStation.GetID() - 1])
-            {
-                frontiereQueue.push(adjacentStation);
-                discoveredSet[adjacentStation.GetID() - 1] = true;
-            }
-        }
-    }
-    // Frontiere queue empties before target is reached, no path exists.
-    return false;
+    return (get_shortest_route(startStationID, targetStationID, *shortestRouteWithLayoverSequenceTable).RouteIsValid());
 }
 
 bool StationGraph::DirectPathExists(int station1ID, int station2ID)
