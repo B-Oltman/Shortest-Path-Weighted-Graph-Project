@@ -256,11 +256,11 @@ Route StationGraph::get_route(int departureKey, int destinationKey, std::vector<
     Route finalRoute{(*departureGraphList)[departureKey], shortPath, (*departureGraphList)[destinationKey]};
 
     if(finalRoute.RouteIsValid())
-    {
+    {        
         return finalRoute;
     }
     else
-    {
+    {        
         return{{{}, -1, -1, -1} ,{}, {{}, -1, -1, -1}};
     }            
 }
@@ -275,32 +275,44 @@ Route StationGraph::get_shortest_route(int departureID, int destinationID, std::
         {
             if((*departureGraphList)[j].GetStationID() == departureID && (*departureGraphList)[k].GetStationID() == destinationID)
             {
-                potentialRouteList.push_back(get_route(j, k, routeLookUpTable));
+                Route potentialRoute = get_route(j, k, routeLookUpTable);
+                if(potentialRoute.RouteIsValid())
+                {
+                    potentialRouteList.push_back(potentialRoute);
+                }                                
             }
         }
     }
 
-    //Determine which route is shortest and return it.
-    int minimumWeight = Utility::INF;
-    int shortestRouteIndex = -1;    
-    for(int i = 0; i < potentialRouteList.size(); i++)
+    if(potentialRouteList.size() > 0)
     {
-        int totalCurrentWeight = 0;
-        for(int j = 0; j < potentialRouteList[i].tripList.size(); j++)
+        //Determine which route is shortest and return it.
+        int minimumWeight = Utility::INF;
+        int shortestRouteIndex = -1;
+        for (int i = 0; i < potentialRouteList.size(); i++)
         {
-            TripPlusLayover currentTrip = potentialRouteList[i].tripList[j];
-            totalCurrentWeight += currentTrip.tripWeight;
+            int totalCurrentWeight = 0;
+            for (int j = 0; j < potentialRouteList[i].tripList.size(); j++)
+            {
+                TripPlusLayover currentTrip = potentialRouteList[i].tripList[j];
+                totalCurrentWeight += currentTrip.tripWeight;
+            }
+
+            if (totalCurrentWeight < minimumWeight)
+            {
+                minimumWeight = totalCurrentWeight;
+                totalCurrentWeight = 0;
+                shortestRouteIndex = i;
+            }
         }
 
-        if(totalCurrentWeight < minimumWeight)
-        {
-            minimumWeight = totalCurrentWeight;
-            totalCurrentWeight = 0;
-            shortestRouteIndex = i;
-        }
+        return potentialRouteList[shortestRouteIndex];
     }
-
-    return potentialRouteList[shortestRouteIndex];
+    else
+    {
+        return {{{}, -1, -1, -1} ,{}, {{}, -1, -1, -1}};
+    }
+    
 }
 
 void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)

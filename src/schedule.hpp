@@ -217,7 +217,7 @@ void Schedule::ShortestTripLengthWithLayover()
 
     if(tripRoute.tripList.size() > 0)
     {        
-        int totalTripMins;
+        int totalTripMins = 0;
         for(TripPlusLayover trip : tripRoute.tripList)
         {            
             totalTripMins += trip.tripWeight;
