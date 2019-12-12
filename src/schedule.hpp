@@ -55,7 +55,7 @@ Schedule::Schedule(std::string stationData, std::string trainsData)
 {
     build_station_lookup_table(stationData);
     build_trip_data_table(trainsData);
-    stationGraph = new StationGraph(tripDataTable, stationLookupTable.size());
+    stationGraph = new StationGraph(tripDataTable, stationLookupTable, stationLookupTable.size());
 }
 
 Schedule::~Schedule()

@@ -9,7 +9,7 @@
 
 class StationGraph{
     public:
-        StationGraph(std::vector<std::vector<std::string>> const tripData, int stationsCount);
+        StationGraph(std::vector<std::vector<std::string>> const tripData, std::vector<std::vector<std::string>> const stationData, int stationsCount);
         ~StationGraph();
         bool DirectPathExists(int station1ID, int station2ID);
         bool PathExists(int startStationID, int targetStationID);        
@@ -34,14 +34,14 @@ class StationGraph{
         Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable);        
         void build_stations_graph(std::vector<std::vector<std::string>> tripData);
         void build_station_arrivals_graph(std::vector<std::vector<std::string>> tripData);
-        void build_departures_graph(std::vector<std::vector<std::string>> tripData);
+        void build_departures_graph(std::vector<std::vector<std::string>> tripData, std::vector<std::vector<std::string>> stationData);
 };
 
-StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataTable, int stationsCount) : stationCount(stationsCount)
+StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataTable, std::vector<std::vector<std::string>> const stationDataTable, int stationsCount) : stationCount(stationsCount)
 {
     build_stations_graph(tripDataTable);
     build_station_arrivals_graph(tripDataTable);
-    build_departures_graph(tripDataTable);
+    build_departures_graph(tripDataTable, stationDataTable);
     floyd_warshal_shortest_paths(true);
     
     //DEBUG PRINTING
@@ -110,12 +110,12 @@ void StationGraph::build_stations_graph(std::vector<std::vector<std::string>> tr
     }
 }
 
-void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> tripDataTable)
+void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> tripDataTable, std::vector<std::vector<std::string>> stationDataTable)
 {
     departureGraphList = new std::vector<Departure>;
-    std::vector<std::pair<std::pair<int, int>, std::vector<TripPlusLayover>>> tempTripTable;
+    std::vector<std::pair<std::pair<int, int>, std::vector<TripPlusLayover>>> tempTripTable; 
 
-    for(int i = 0; i < (tripDataTable.size()); i++)
+    for(int i = 0; i < tripDataTable.size(); i++)
     {
         tempTripTable.push_back({});
     }
@@ -131,7 +131,8 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
         // Map trip target station id to the lookUpKey of the vertex.
         for(int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
         {
-            if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[i][2]))
+            if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[i][0]) && (stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[i][2])) 
+                && (stoi(tripDataTable[keyIndx][3]) == stoi(tripDataTable[i][3])))
             {   
                 // Map terminating destinations to the appropriate keys at the end of the look up table.             
                 destinationKey = stoi(tripDataTable[keyIndx][1]) + (tripDataTable.size() - 1);
@@ -165,7 +166,8 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
                     // Map trip ID to its corresponding key value for easy look up.
                     for(int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
                     {
-                        if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[j][0]) && stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[j][2]))
+                        if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[j][0]) && stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[j][2])
+                            && stoi(tripDataTable[keyIndx][3]) == stoi(tripDataTable[j][3]))
                         {
                             destinationKey = keyIndx;
                         }
@@ -177,7 +179,8 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
                     for(int k = 0; k < tripDataTable.size(); k++)
                     {
                         //If the target edge departure time and departure station match, this is the correct insertion point, add edge to adjacency list.
-                        if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2]))
+                        if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2])
+                            && stoi(tripDataTable[k][3]) == stoi(tripDataTable[i][3]))
                         {                        
                             tempTripTable[k].first.first = departureTime;
                             tempTripTable[k].first.second = stoi(tripDataTable[i][0]);
@@ -196,10 +199,10 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
     }
 
     // Populate terminating arrival nodes, required for shortest path algortithm
-    for(int i = tripDataTable.size(); i < (tripDataTable.size() * 2); i++)
+    for(int i = 0; i < stationDataTable.size(); i++)
     {
-       departureGraphList->push_back({{}, stoi(tripDataTable[i - tripDataTable.size()][0]), i, 0});     
-    } 
+       departureGraphList->push_back({{}, stoi(stationDataTable[i][0]), i + (int)tempTripTable.size(), 0});     
+    }
 }
 
 void StationGraph::build_station_arrivals_graph(std::vector<std::vector<std::string>> tripDataTable)
@@ -317,11 +320,13 @@ Route StationGraph::get_shortest_route(int departureID, int destinationID, std::
 
 void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
 {
+    // number of table entries will be the larger of station count and size of graph list.    
     const int INF = Utility::INF;
     // Construct adjacency matrix from adjacencyList. If value == INF, no path exists between start and end index.
     std::vector<std::vector<int>> distance(departureGraphList->size(), std::vector<int>(departureGraphList->size(), INF));
     // Sequence table to store shortest paths for future operations.
     std::vector<std::vector<int>>* shortestRouteTable;
+
 
     if(includeLayovers)
     {
