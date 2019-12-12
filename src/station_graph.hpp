@@ -12,8 +12,9 @@ class StationGraph{
         StationGraph(std::vector<std::vector<std::string>> const tripData, int stationsCount);
         ~StationGraph();
         bool DirectPathExists(int station1ID, int station2ID);
-        bool PathExists(int startStationID, int targetStationID);
+        bool PathExists(int startStationID, int targetStationID);        
         Station GetStationFromGraph(int stationID);
+        Route GetShortestRoute(int departureStationID, int destinationStationID, bool includeLayovers);
         Station GetStationFromArrivalGraph(int stationID);
         int GetVertexCount();
     private:
@@ -29,8 +30,8 @@ class StationGraph{
         std::vector<std::vector<int>>* shortestRouteWithLayoverSequenceTable;
         std::vector<std::vector<int>>* shortestRouteWithoutLayoverSequenceTable;
         void floyd_warshal_shortest_paths(bool includeLayovers);
-        std::vector<TripPlusLayover> get_route(int departureKey, int destinationKey);
-        Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& const pathLookUpTable);        
+        Route get_route(int departureKey, int destinationKey, std::vector<std::vector<int>>& routeLookUpTable);
+        Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable);        
         void build_stations_graph(std::vector<std::vector<std::string>> tripData);
         void build_station_arrivals_graph(std::vector<std::vector<std::string>> tripData);
         void build_departures_graph(std::vector<std::vector<std::string>> tripData);
@@ -218,7 +219,7 @@ void StationGraph::build_station_arrivals_graph(std::vector<std::vector<std::str
     }
 }
 
-std::vector<TripPlusLayover> StationGraph::get_route(int departureKey, int destinationKey)
+Route StationGraph::get_route(int departureKey, int destinationKey, std::vector<std::vector<int>>& routeLookUpTable)
 {        
     std::vector<TripPlusLayover> shortPath;
     
@@ -228,7 +229,7 @@ std::vector<TripPlusLayover> StationGraph::get_route(int departureKey, int desti
     while(!endOfPath)
     {
         Departure currentNode = (*departureGraphList)[nextStopID];
-        nextStopID = (*shortestRouteWithLayoverSequenceTable).at(nextStopID).at(destinationKey);
+        nextStopID = routeLookUpTable[nextStopID][destinationKey];
 
         if (currentNode.IsFinalDestination() || nextStopID == Utility::INF)
         {
@@ -241,10 +242,19 @@ std::vector<TripPlusLayover> StationGraph::get_route(int departureKey, int desti
         }
     }
 
-    return shortPath;
+    Route finalRoute{(*departureGraphList)[departureKey], shortPath, (*departureGraphList)[destinationKey]};
+
+    if(finalRoute.RouteIsValid())
+    {
+        return finalRoute;
+    }
+    else
+    {
+        return{{{}, -1, -1, -1} ,{}, {{}, -1, -1, -1}};
+    }            
 }
 
-Route StationGraph::get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& const pathLookUpTable)
+Route StationGraph::get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable)
 {
     std::vector<Route> potentialRouteList;
 
@@ -254,7 +264,7 @@ Route StationGraph::get_shortest_route(int departureID, int destinationID, std::
         {
             if((*departureGraphList)[j].GetStationID() == departureID && (*departureGraphList)[k].GetStationID() == destinationID)
             {
-                potentialRouteList.push_back({(*departureGraphList)[j], get_route(j, k), (*departureGraphList)[k]});
+                potentialRouteList.push_back(get_route(j, k, routeLookUpTable));
             }
         }
     }
@@ -341,6 +351,19 @@ void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
             }
         }
     }
+}
+
+Route StationGraph::GetShortestRoute(int departureStationID, int destinationStationID, bool includeLayovers)
+{
+    if(includeLayovers)
+    {
+        return get_shortest_route(departureStationID, destinationStationID, *shortestRouteWithLayoverSequenceTable);
+    }
+    else
+    {
+        return get_shortest_route(departureStationID, destinationStationID, *shortestRouteWithoutLayoverSequenceTable);
+    }
+    
 }
 
 int StationGraph::GetVertexCount()

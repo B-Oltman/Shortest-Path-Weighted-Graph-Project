@@ -79,9 +79,10 @@ int main(int argc, char** argv)
                 trainSchedule.GetDirectRoute();
                 break;
             case 7:
-                trainSchedule.ShortestTripLengthRideTime();
+                //trainSchedule.ShortestTripLengthRideTime();
                 break;
             case 8:
+                trainSchedule.ShortestTripLengthWithLayover();
                 break;
             case 9:
                 break;

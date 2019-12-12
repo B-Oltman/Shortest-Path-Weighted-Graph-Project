@@ -7,6 +7,7 @@
 #include "station_graph.hpp"
 #include "trip.hpp"
 #include "utility.hpp"
+#include "route.hpp"
 
 class Schedule{
     public:
@@ -36,6 +37,7 @@ class Schedule{
         //Returns the shortest time to go from A to B with layover time excluded, else alert to no path
         void ShortestTripLengthRideTime();
         //TripLengthYesLayover - returns the shortest time to go from A to B, layovers are allowed, else alert user to no path
+        void ShortestTripLengthWithLayover();
         //TripLengthGivenTime - returns the shortest time to go from A to B when departing at a specific time only. 
     private:
         std::vector<std::vector<std::string>> stationLookupTable;
@@ -205,20 +207,24 @@ void Schedule::LookUpStationName()
 
 void Schedule::ShortestTripLengthRideTime()
 {
-    std::pair<int, int> stationPair = prompt_station_pair_id();
-    std::vector<Trip> tripRoute = stationGraph->GetShortestRoute(stationPair.first, stationPair.second);
 
-    if(tripRoute.size() > 0)
-    {
-        std::cout << "First Trip Travel Time: " << tripRoute[0].travelTimeMins << std::endl;
+}
+
+void Schedule::ShortestTripLengthWithLayover()
+{
+    std::pair<int, int> stationPair = prompt_station_pair_id();
+    Route tripRoute = stationGraph->GetShortestRoute(stationPair.first, stationPair.second, true);
+
+    if(tripRoute.tripList.size() > 0)
+    {        
         int totalTripMins;
-        for(Trip trip : tripRoute)
+        for(TripPlusLayover trip : tripRoute.tripList)
         {            
-            totalTripMins += trip.travelTimeMins;
+            totalTripMins += trip.tripWeight;
         }
 
-        std::cout << "Riding time to go from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " is " 
-        << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes.\n";        
+        std::cout << "Travel time to go from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " is " 
+        << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes including layovers.\n";        
     }
     else
     {
