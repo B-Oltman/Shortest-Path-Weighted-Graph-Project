@@ -31,7 +31,8 @@ class StationGraph{
         std::vector<std::vector<int>>* shortestRouteWithoutLayoverSequenceTable;
         void floyd_warshal_shortest_paths(bool includeLayovers);
         Route get_route(int departureKey, int destinationKey, std::vector<std::vector<int>>& routeLookUpTable);
-        Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable);        
+        Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable);   
+        bool station_records_match(int Key1, int Key2, std::vector<std::vector<std::string>>& tripDataTable);
         void build_stations_graph(std::vector<std::vector<std::string>> tripData);
         void build_station_arrivals_graph(std::vector<std::vector<std::string>> tripData);
         void build_departures_graph(std::vector<std::vector<std::string>> tripData, std::vector<std::vector<std::string>> stationData);
@@ -110,6 +111,14 @@ void StationGraph::build_stations_graph(std::vector<std::vector<std::string>> tr
     }
 }
 
+bool StationGraph::station_records_match(int Key1, int Key2, std::vector<std::vector<std::string>>& tripDataTable)
+{
+    return (stoi(tripDataTable[Key1][0]) == stoi(tripDataTable[Key2][0])
+        && stoi(tripDataTable[Key1][1]) == stoi(tripDataTable[Key2][1])
+        && stoi(tripDataTable[Key1][2]) == stoi(tripDataTable[Key2][2])
+        && stoi(tripDataTable[Key1][3]) == stoi(tripDataTable[Key2][3]));
+}
+
 void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> tripDataTable, std::vector<std::vector<std::string>> stationDataTable)
 {
     departureGraphList = new std::vector<Departure>;
@@ -131,8 +140,7 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
         // Map trip target station id to the lookUpKey of the vertex.
         for(int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
         {
-            if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[i][0]) && (stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[i][2])) 
-                && (stoi(tripDataTable[keyIndx][3]) == stoi(tripDataTable[i][3])))
+            if(station_records_match(keyIndx, i, tripDataTable))
             {   
                 // Map terminating destinations to the appropriate keys at the end of the look up table.             
                 destinationKey = stoi(tripDataTable[keyIndx][1]) + (tripDataTable.size() - 1);
@@ -166,8 +174,7 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
                     // Map trip ID to its corresponding key value for easy look up.
                     for(int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
                     {
-                        if(stoi(tripDataTable[keyIndx][0]) == stoi(tripDataTable[j][0]) && stoi(tripDataTable[keyIndx][2]) == stoi(tripDataTable[j][2])
-                            && stoi(tripDataTable[keyIndx][3]) == stoi(tripDataTable[j][3]))
+                        if(station_records_match(keyIndx, j, tripDataTable))
                         {
                             destinationKey = keyIndx;
                         }
@@ -179,8 +186,7 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
                     for(int k = 0; k < tripDataTable.size(); k++)
                     {
                         //If the target edge departure time and departure station match, this is the correct insertion point, add edge to adjacency list.
-                        if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2])
-                            && stoi(tripDataTable[k][3]) == stoi(tripDataTable[i][3]))
+                        if(station_records_match(k, i, tripDataTable))
                         {                        
                             tempTripTable[k].first.first = departureTime;
                             tempTripTable[k].first.second = stoi(tripDataTable[i][0]);
