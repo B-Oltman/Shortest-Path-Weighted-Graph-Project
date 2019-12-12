@@ -19,19 +19,23 @@ class StationGraph{
         int GetVertexCount();
     private:
         const int stationCount;
-        //Departure graph is the standard graph used for operations concerned with going from a starting node to a
-        // destination node, this is the majority of the functions in the program.
+
+        // Station graph is a simple graph representing connections between stations by train routes.
+        // this is used for easy schedule lookup, not used for route calculations.
         std::vector<Station>* stationsGraphList;
-        // Arrivals graph is an inverted version of the graph so that arrivals to a station can be
-        // looked up easily. Only used for a few functions in the program.
+        // Arrivals graph is used in partnership with stations graph, it is inverted so that it maps trains arriving at a given station (vertex)
+        // rather than leaving a given station. Used for printing schedules.
         std::vector<Station>* stationArrivalsGraphList;
-        // Used to calculate shortest route accounting for layovers.
+
+        // Departure graph is used for the bulk of our calculations. It represents all possible valid routes by mapping
+        // departure times to the vertices and possible routes to the edges.
         std::vector<Departure>* departureGraphList;
         std::vector<std::vector<int>>* shortestRouteWithLayoverSequenceTable;
         std::vector<std::vector<int>>* shortestRouteWithoutLayoverSequenceTable;
         void floyd_warshal_shortest_paths(bool includeLayovers);
         Route get_route(int departureKey, int destinationKey, std::vector<std::vector<int>>& routeLookUpTable);
         Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable);   
+        bool direct_route_exists(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable);
         bool station_records_match(int Key1, int Key2, std::vector<std::vector<std::string>>& tripDataTable);
         void build_stations_graph(std::vector<std::vector<std::string>> tripData);
         void build_station_arrivals_graph(std::vector<std::vector<std::string>> tripData);
@@ -249,8 +253,7 @@ Route StationGraph::get_route(int departureKey, int destinationKey, std::vector<
         return{{{}, -1, -1, -1} ,{}, {{}, -1, -1, -1}};
     }            
 }
-
-Route StationGraph::get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable)
+bool StationGraph::direct_route_exists(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable)
 {
     std::vector<Route> potentialRouteList;
 
@@ -258,18 +261,42 @@ Route StationGraph::get_shortest_route(int departureID, int destinationID, std::
     {
         for (int k = 0; k < departureGraphList->size(); k++)
         {
-            if((*departureGraphList)[j].GetStationID() == departureID && (*departureGraphList)[k].GetStationID() == destinationID)
+            if ((*departureGraphList)[j].GetStationID() == departureID && (*departureGraphList)[k].GetStationID() == destinationID)
             {
                 Route potentialRoute = get_route(j, k, routeLookUpTable);
-                if(potentialRoute.RouteIsValid())
+                if (potentialRoute.RouteIsValid())
                 {
-                    potentialRouteList.push_back(potentialRoute);
-                }                                
+                    if(potentialRoute.tripList.size() == 1)
+                    {
+                        return true;
+                    }
+                }
             }
         }
     }
 
-    if(potentialRouteList.size() > 0)
+    return false;
+}
+Route StationGraph::get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>> &routeLookUpTable)
+{
+    std::vector<Route> potentialRouteList;
+
+    for (int j = 0; j < departureGraphList->size(); j++)
+    {
+        for (int k = 0; k < departureGraphList->size(); k++)
+        {
+            if ((*departureGraphList)[j].GetStationID() == departureID && (*departureGraphList)[k].GetStationID() == destinationID)
+            {
+                Route potentialRoute = get_route(j, k, routeLookUpTable);
+                if (potentialRoute.RouteIsValid())
+                {
+                    potentialRouteList.push_back(potentialRoute);
+                }
+            }
+        }
+    }
+
+    if (potentialRouteList.size() > 0)
     {
         //Determine which route is shortest and return it.
         int minimumWeight = Utility::INF;
@@ -295,22 +322,20 @@ Route StationGraph::get_shortest_route(int departureID, int destinationID, std::
     }
     else
     {
-        return {{{}, -1, -1, -1} ,{}, {{}, -1, -1, -1}};
+        return {{{}, -1, -1, -1}, {}, {{}, -1, -1, -1}};
     }
-    
 }
 
 void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
 {
-    // number of table entries will be the larger of station count and size of graph list.    
+    // number of table entries will be the larger of station count and size of graph list.
     const int INF = Utility::INF;
     // Construct adjacency matrix from adjacencyList. If value == INF, no path exists between start and end index.
     std::vector<std::vector<int>> distance(departureGraphList->size(), std::vector<int>(departureGraphList->size(), INF));
     // Sequence table to store shortest paths for future operations.
-    std::vector<std::vector<int>>* shortestRouteTable;
+    std::vector<std::vector<int>> *shortestRouteTable;
 
-
-    if(includeLayovers)
+    if (includeLayovers)
     {
         shortestRouteWithLayoverSequenceTable = new std::vector<std::vector<int>>(departureGraphList->size(), std::vector<int>(departureGraphList->size(), INF));
         shortestRouteTable = shortestRouteWithLayoverSequenceTable;
@@ -319,17 +344,16 @@ void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
     {
         shortestRouteWithoutLayoverSequenceTable = new std::vector<std::vector<int>>(departureGraphList->size(), std::vector<int>(departureGraphList->size(), INF));
         shortestRouteTable = shortestRouteWithoutLayoverSequenceTable;
-    }    
-    
+    }
 
-    for(int i = 0; i < departureGraphList->size(); i++)
+    for (int i = 0; i < departureGraphList->size(); i++)
     {
         Departure currentDeparture = (*departureGraphList)[i];
 
         for (int j = 0; j < currentDeparture.GetTripCount(); j++)
         {
             int startID = currentDeparture.GetLookUpKey();
-            int tripWeight = currentDeparture.GetTrip(j).tripWeight;            
+            int tripWeight = currentDeparture.GetTrip(j).tripWeight;
             int destinationID = currentDeparture.GetTrip(j).destinationKey;
 
             distance[startID][destinationID] = tripWeight;
@@ -338,19 +362,19 @@ void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
     }
 
     //Floyd Warshal Algorithm
-    for(int k = 0; k < departureGraphList->size(); k++)
+    for (int k = 0; k < departureGraphList->size(); k++)
     {
-        for(int i = 0; i < departureGraphList->size(); i++)
+        for (int i = 0; i < departureGraphList->size(); i++)
         {
-            for(int j = 0; j < departureGraphList->size(); j++)
+            for (int j = 0; j < departureGraphList->size(); j++)
             {
-                if(distance[i][k] != INF && distance[k][j] != INF &&
+                if (distance[i][k] != INF && distance[k][j] != INF &&
                     distance[i][k] + distance[k][j] < distance[i][j])
-                    {
-                        distance[i][j] = distance[i][k] + distance[k][j];
-                        // Update shortest path table to reflect new shorter node.
-                        (*shortestRouteTable).at(i).at(j) = (*shortestRouteTable).at(i).at(k);
-                    }
+                {
+                    distance[i][j] = distance[i][k] + distance[k][j];
+                    // Update shortest path table to reflect new shorter node.
+                    (*shortestRouteTable).at(i).at(j) = (*shortestRouteTable).at(i).at(k);
+                }
             }
         }
     }
@@ -358,7 +382,7 @@ void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
 
 Route StationGraph::GetShortestRoute(int departureStationID, int destinationStationID, bool includeLayovers)
 {
-    if(includeLayovers)
+    if (includeLayovers)
     {
         return get_shortest_route(departureStationID, destinationStationID, *shortestRouteWithLayoverSequenceTable);
     }
@@ -366,7 +390,6 @@ Route StationGraph::GetShortestRoute(int departureStationID, int destinationStat
     {
         return get_shortest_route(departureStationID, destinationStationID, *shortestRouteWithoutLayoverSequenceTable);
     }
-    
 }
 
 int StationGraph::GetVertexCount()
@@ -377,7 +400,7 @@ int StationGraph::GetVertexCount()
 Station StationGraph::GetStationFromGraph(int stationID)
 {
     int iDAsZeroIndex = stationID - 1;
-    if(iDAsZeroIndex < stationsGraphList->size() && iDAsZeroIndex >= 0)
+    if (iDAsZeroIndex < stationsGraphList->size() && iDAsZeroIndex >= 0)
     {
         return (*stationsGraphList)[iDAsZeroIndex];
     }
@@ -385,7 +408,7 @@ Station StationGraph::GetStationFromGraph(int stationID)
     {
         // return invalid station if bad station ID
         return Station({-1, {}});
-    } 
+    }
 }
 
 // Duplication of code between two graph types. Might want to pull this out to be more
@@ -393,7 +416,7 @@ Station StationGraph::GetStationFromGraph(int stationID)
 Station StationGraph::GetStationFromArrivalGraph(int stationID)
 {
     int iDAsZeroIndex = stationID - 1;
-    if(iDAsZeroIndex < stationArrivalsGraphList->size() && iDAsZeroIndex >= 0)
+    if (iDAsZeroIndex < stationArrivalsGraphList->size() && iDAsZeroIndex >= 0)
     {
         return (*stationArrivalsGraphList)[iDAsZeroIndex];
     }
@@ -401,7 +424,7 @@ Station StationGraph::GetStationFromArrivalGraph(int stationID)
     {
         // return invalid station if bad station ID
         return Station({-1, {}});
-    } 
+    }
 }
 
 bool StationGraph::PathExists(int startStationID, int targetStationID)
@@ -409,18 +432,7 @@ bool StationGraph::PathExists(int startStationID, int targetStationID)
     return (get_shortest_route(startStationID, targetStationID, *shortestRouteWithLayoverSequenceTable).RouteIsValid());
 }
 
-bool StationGraph::DirectPathExists(int station1ID, int station2ID)
+bool StationGraph::DirectPathExists(int startStationID, int targetStationID)
 {
-    Station currentStation = GetStationFromGraph(station1ID);
-    for(int i = 0; i < currentStation.GetTripCount(); i++)
-    {
-        if(currentStation.GetTrip(i).destinationID == station2ID)
-        {
-            return true;
-        }
-    }
-    return false;
+    return direct_route_exists(startStationID, targetStationID, *shortestRouteWithLayoverSequenceTable);    
 }
-
-
-

@@ -83,22 +83,37 @@ void Schedule::PrintStationSchedule()
     int stationID = prompt_station_id();
     Station station = stationGraph->GetStationFromGraph(stationID);
     std::cout << "Schedule for " << SimpleStationNameLookup(station.GetID()) << std::endl;
-    for(int i = 0; i < station.GetTripCount(); i++)
+
+    if (station.GetTripCount() == 0)
     {
-        int destinationID = station.GetTrip(i).destinationID;
-        int departureTime = station.GetTrip(i).departureTime;
-        int arrivalTime = station.GetTrip(i).arrivalTime;
-        std::cout << "Departure to " << SimpleStationNameLookup(destinationID) << " at " 
-            << departureTime << ", arriving at " << arrivalTime << std::endl;
+        std::cout << "There are no scheduled departures for " << SimpleStationNameLookup(station.GetID()) << std::endl;
+    }
+    else
+    {
+        for (int i = 0; i < station.GetTripCount(); i++)
+        {
+            int destinationID = station.GetTrip(i).destinationID;
+            int departureTime = station.GetTrip(i).departureTime;
+            int arrivalTime = station.GetTrip(i).arrivalTime;
+            std::cout << "Departure to " << SimpleStationNameLookup(destinationID) << " at "
+                      << departureTime << ", arriving at " << arrivalTime << std::endl;
+        }
     }
 
     station = stationGraph->GetStationFromArrivalGraph(stationID);
-    for(int i = 0; i < station.GetTripCount(); i++)
+    if (station.GetTripCount() == 0)
     {
-        int departureID = station.GetTrip(i).destinationID;
-        int arrivalTime = station.GetTrip(i).departureTime;
-        std::cout << "Arrival from " << SimpleStationNameLookup(departureID) << " at " 
-            << arrivalTime << std::endl;
+        std::cout << "There are no scheduled arrivals for " << SimpleStationNameLookup(station.GetID()) << std::endl;
+    }
+    else
+    {
+        for (int i = 0; i < station.GetTripCount(); i++)
+        {
+            int departureID = station.GetTrip(i).destinationID;
+            int arrivalTime = station.GetTrip(i).departureTime;
+            std::cout << "Arrival from " << SimpleStationNameLookup(departureID) << " at "
+                      << arrivalTime << std::endl;
+        }
     }
 }
 
@@ -106,33 +121,45 @@ void Schedule::PrintStationSchedule(int stationID)
 {
     Station station = stationGraph->GetStationFromGraph(stationID);
 
-    if(station.StationIsValid())
+    if (station.StationIsValid())
     {
         std::cout << "Schedule for " << SimpleStationNameLookup(station.GetID()) << std::endl;
-        for(int i = 0; i < station.GetTripCount(); i++)
+        if (station.GetTripCount() != 0)
+        {        
+            for (int i = 0; i < station.GetTripCount(); i++)
+            {
+                int destinationID = station.GetTrip(i).destinationID;
+                int departureTime = station.GetTrip(i).departureTime;
+                int arrivalTime = station.GetTrip(i).arrivalTime;
+                std::cout << "Departure to " << SimpleStationNameLookup(destinationID) << " at "
+                          << departureTime << ", arriving at " << arrivalTime << std::endl;
+            }
+        }
+        else
         {
-            int destinationID = station.GetTrip(i).destinationID;
-            int departureTime = station.GetTrip(i).departureTime;
-            int arrivalTime = station.GetTrip(i).arrivalTime;
-            std::cout << "Departure to " << SimpleStationNameLookup(destinationID) << " at " 
-                << departureTime << ", arriving at " << arrivalTime << std::endl;
+            std::cout << "There are no trains leaving from " << SimpleStationNameLookup(station.GetID()) << std::endl;
         }
 
         station = stationGraph->GetStationFromArrivalGraph(stationID);
-        for(int i = 0; i < station.GetTripCount(); i++)
+        if (station.GetTripCount() != 0)
         {
-           int departureID = station.GetTrip(i).destinationID;
-            int arrivalTime = station.GetTrip(i).departureTime;
-            std::cout << "Arrival from " << SimpleStationNameLookup(departureID) << " at " 
-                << arrivalTime << std::endl;
+            for (int i = 0; i < station.GetTripCount(); i++)
+            {
+                int departureID = station.GetTrip(i).destinationID;
+                int arrivalTime = station.GetTrip(i).departureTime;
+                std::cout << "Arrival from " << SimpleStationNameLookup(departureID) << " at "
+                          << arrivalTime << std::endl;
+            }
+        }
+        else
+        {
+            std::cout << "There are no scheduled arrivals for " << SimpleStationNameLookup(station.GetID()) << std::endl;
         }
     }
     else
     {
         std::cout << "There was a problem with the input\nin PrintStationSchedule, please try again.\n";
-    }
-    
-    
+    }       
 }
 
 void Schedule::LookUpStationId()
