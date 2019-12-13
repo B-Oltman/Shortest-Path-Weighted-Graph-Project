@@ -33,3 +33,6 @@
 
 # VS settings
 *.vscode
+
+#debug files
+debugSnippets.debug

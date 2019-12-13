@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <algorithm>
 #include "station_graph.hpp"
 #include "trip.hpp"
 #include "utility.hpp"
@@ -44,7 +45,7 @@ class Schedule{
         std::vector<std::vector<std::string>> tripDataTable;
         StationGraph* stationGraph;
         // Builds a lookup table to map station id to station name.
-        void build_station_lookup_table(std::string stationData);
+        void build_station_lookup_table(std::string stationData);        
         void build_trip_data_table(std::string trainsData);
         int prompt_station_id() const;
         std::pair<int, int> prompt_station_pair_id() const;
@@ -320,6 +321,10 @@ void Schedule::build_station_lookup_table(std::string stationData)
             stationLookupTable[stationLookupTable.size() - 1].push_back(token);
         }
     }
+
+    // sort the data in station table, not guaranteed to come in sorted.
+   std::sort(stationLookupTable.begin(), stationLookupTable.end(),
+        [](const std::vector<std::string>& a, const std::vector<std::string>& b) { return a[0] < b[0]; });
 }
 
 void Schedule::build_trip_data_table(std::string trainsData)
