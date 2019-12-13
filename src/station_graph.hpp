@@ -47,7 +47,44 @@ StationGraph::StationGraph(std::vector<std::vector<std::string>> const tripDataT
     build_stations_graph(tripDataTable);
     build_station_arrivals_graph(tripDataTable);
     build_departures_graph(tripDataTable, stationDataTable);
+
+    // Build shortest path lookup table for both including layovers, and for not including layvoers.
     floyd_warshal_shortest_paths(true);
+    floyd_warshal_shortest_paths(false);
+
+    //DEBUG PRINTING
+    std::cout << "\n*****DEPARTURE GRAPH TEST in floyd warshal shortest path include layovers function*****\n";
+    for(int i = 0; i < departureGraphList->size(); i++)
+    {
+        Departure station = (*departureGraphList)[i];
+        std::cout << "Vertex: " << station.GetLookUpKey() << ":\n";
+        for(int j = 0; j < station.GetTripCount(); j++)
+        {
+            TripPlusLayover trip = station.GetTrip(j);
+            std::cout << "  Destination ID: " << trip.destinationKey << " Trip Weight: " << trip.tripWeight << std::endl;
+        }
+    }
+
+    std::cout << "SEQUENCE TABLE TEST LAYOVER INCLUDED***************************\n";
+    for(int i = 0; i < shortestRouteWithLayoverSequenceTable->size(); i++)
+    {
+        for(int j = 0; j < shortestRouteWithLayoverSequenceTable->size(); j++)
+        {
+            std::cout << (*shortestRouteWithLayoverSequenceTable).at(i).at(j) << " ";
+        }
+        std::cout << std::endl;
+    }
+
+    std::cout << "SEQUENCE TABLE TEST LAYOVER NOT INCLUDED***************************\n";
+    for(int i = 0; i < shortestRouteWithLayoverSequenceTable->size(); i++)
+    {
+        for(int j = 0; j < shortestRouteWithLayoverSequenceTable->size(); j++)
+        {
+            std::cout << (*shortestRouteWithoutLayoverSequenceTable).at(i).at(j) << " ";
+        }
+        std::cout << std::endl;
+    }
+    //END DEBUG PRINTING
 }
 
 StationGraph::~StationGraph()
@@ -130,7 +167,7 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
         for(int k = 0; k < tripDataTable.size(); k++)
         {
             //If the target edge departure time and departure station match, this is the correct insertion point, add edge to adjacency list.
-            if(stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2]))
+            if(station_records_match(k, i, tripDataTable))//stoi(tripDataTable[k][0]) == stoi(tripDataTable[i][0]) && stoi(tripDataTable[k][2]) == stoi(tripDataTable[i][2]))
             {
                 tempTripTable[k].first.first = departureTime;
                 tempTripTable[k].first.second = stoi(tripDataTable[i][0]);
@@ -353,7 +390,9 @@ void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
         for (int j = 0; j < currentDeparture.GetTripCount(); j++)
         {
             int startID = currentDeparture.GetLookUpKey();
-            int tripWeight = currentDeparture.GetTrip(j).tripWeight;
+            // if not include layovers, only include ride time in weight calculation.
+            int tripWeight = includeLayovers? currentDeparture.GetTrip(j).tripWeight : currentDeparture.GetTrip(j).rideTimeToDestinationMins;
+            std::cout << "Trip Weight: " << currentDeparture.GetTrip(j).tripWeight << " Ride Time: " << currentDeparture.GetTrip(j).rideTimeToDestinationMins << std::endl;
             int destinationID = currentDeparture.GetTrip(j).destinationKey;
 
             distance[startID][destinationID] = tripWeight;

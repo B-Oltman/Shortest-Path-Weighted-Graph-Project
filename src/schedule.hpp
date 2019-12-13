@@ -234,7 +234,24 @@ void Schedule::LookUpStationName()
 
 void Schedule::ShortestTripLengthRideTime()
 {
+    std::pair<int, int> stationPair = prompt_station_pair_id();
+    Route tripRoute = stationGraph->GetShortestRoute(stationPair.first, stationPair.second, false);
 
+    if (tripRoute.tripList.size() > 0)
+    {
+        int totalTripMins = 0;
+        for (TripPlusLayover trip : tripRoute.tripList)
+        {
+            totalTripMins += trip.rideTimeToDestinationMins;
+        }
+
+        std::cout << "Travel time to go from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " is "
+                  << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes excluding layovers.\n";
+    }
+    else
+    {
+        std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << ".\n";
+    }
 }
 
 void Schedule::ShortestTripLengthWithLayover()
@@ -247,7 +264,7 @@ void Schedule::ShortestTripLengthWithLayover()
         int totalTripMins = 0;
         for(TripPlusLayover trip : tripRoute.tripList)
         {            
-            totalTripMins += trip.tripWeight;
+            totalTripMins += trip.layoverAtDestinationMins + trip.rideTimeToDestinationMins;
         }
 
         std::cout << "Travel time to go from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " is " 
