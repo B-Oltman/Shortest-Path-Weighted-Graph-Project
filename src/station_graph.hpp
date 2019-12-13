@@ -150,7 +150,7 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
             {
                 if(tripDataTable[i][3] < tripDataTable[j][2])
                 {                    
-                    departureTime = stoi(tripDataTable[j][2]);
+                    departureTime = stoi(tripDataTable[i][2]);
                     rideTimeToDestination = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
                     layoverAtDestination = stoi(tripDataTable[j][2]) - stoi(tripDataTable[i][3]);
                     totalTripTime = rideTimeToDestination + layoverAtDestination;
@@ -250,7 +250,7 @@ Route StationGraph::get_route(int departureKey, int destinationKey, std::vector<
         }
     }
 
-    Route finalRoute{(*departureGraphList)[departureKey], shortPath, (*departureGraphList)[destinationKey]};
+    Route finalRoute{(*departureGraphList)[departureKey], shortPath};
 
     if(finalRoute.RouteIsValid())
     {        
@@ -258,7 +258,7 @@ Route StationGraph::get_route(int departureKey, int destinationKey, std::vector<
     }
     else
     {        
-        return{{{}, -1, -1, -1} ,{}, {{}, -1, -1, -1}};
+        return{{{}, -1, -1, -1} ,{}};
     }            
 }
 bool StationGraph::direct_route_exists(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable)
@@ -330,7 +330,7 @@ Route StationGraph::get_shortest_route(int departureID, int destinationID, std::
     }
     else
     {
-        return {{{}, -1, -1, -1}, {}, {{}, -1, -1, -1}};
+        return {{{}, -1, -1, -1}, {}};
     }
 }
 

@@ -246,29 +246,22 @@ void Schedule::ShortestTripLengthRideTime()
             totalTripMins += trip.rideTimeToDestinationMins;
         }
 
-        std::cout << "Time on train to go from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " is "
-                  << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes\nItinerary\n----------\n";
+        std::cout << "\nMinimum time spent on train from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << "\nis "
+                  << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes. Layover time not included.\nItinerary\n----------\n";
 
-        /*std::cout << "Leave from " << SimpleStationNameLookup(tripRoute.departingStation.GetStationID())
-            << " at " << tripRoute.departingStation.GetDepartureTime() 
-            << ", arrive at " << SimpleStationNameLookup(tripRoute.destinationStation.GetStationID()) << " at "
-            << tripRoute.departingStation.GetDepartureTime() + tripRoute.tripList[0].rideTimeToDestinationMins
-            << std::endl;*/
-
-        for(int i = 1; i < tripRoute.tripList.size(); i++)
+        Departure startDeparture = tripRoute.departingStation;        
+        for(int i = 0; i < tripRoute.tripList.size(); i++)
         {
-            std::cout << "Leave from " << SimpleStationNameLookup(stationGraph->GetDepartureFromGraph(tripRoute.tripList[i - 1].destinationKey).GetStationID())
-                << " at " << stationGraph->GetDepartureFromGraph(tripRoute.tripList[i - 1].destinationKey).GetDepartureTime()
-                << ", arrive at " << SimpleStationNameLookup(stationGraph->GetDepartureFromGraph(tripRoute.tripList[i].destinationKey).GetStationID()) << " at "
-                << stationGraph->GetDepartureFromGraph(tripRoute.tripList[i - 1].destinationKey).GetDepartureTime() + tripRoute.tripList[i - 1].rideTimeToDestinationMins
-                << std::endl;
-        }
+            TripPlusLayover currentTrip = tripRoute.tripList[i];
+            Departure endDeparture = stationGraph->GetDepartureFromGraph(currentTrip.destinationKey);
 
-        /*std::cout << "Leave from " << SimpleStationNameLookup(stationGraph->GetDepartureFromGraph(tripRoute.tripList[tripRoute.tripList.size() - 1].destinationKey).GetStationID())
-            << " at " << stationGraph->GetDepartureFromGraph(tripRoute.tripList[tripRoute.tripList.size() - 2].destinationKey).GetDepartureTime()
-            << ", arrive at " << SimpleStationNameLookup(tripRoute.destinationStation.GetStationID()) << " at "
-                << stationGraph->GetDepartureFromGraph(tripRoute.tripList[tripRoute.tripList.size() - 1].destinationKey).GetDepartureTime() + tripRoute.tripList[tripRoute.tripList.size() - 1].rideTimeToDestinationMins
-            << std::endl;*/
+            std::cout << "Leave from " << SimpleStationNameLookup(startDeparture.GetStationID())
+                << " at " << startDeparture.GetDepartureTime()
+                << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at "
+                << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins << std::endl;
+
+            startDeparture = endDeparture;
+        }
     }
     else
     {
@@ -289,8 +282,22 @@ void Schedule::ShortestTripLengthWithLayover()
             totalTripMins += trip.tripWeight;
         }
 
-        std::cout << "Travel time to go from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " is " 
-        << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes including layovers.\n";        
+        std::cout << "\nShortest overall travel time from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " \nis " 
+        << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes including layovers.\nItinerary\n----------\n";
+
+        Departure startDeparture = tripRoute.departingStation;
+        for (int i = 0; i < tripRoute.tripList.size(); i++)
+        {
+            TripPlusLayover currentTrip = tripRoute.tripList[i];
+            Departure endDeparture = stationGraph->GetDepartureFromGraph(currentTrip.destinationKey);
+
+            std::cout << "Leave from " << SimpleStationNameLookup(startDeparture.GetStationID())
+                      << " at " << startDeparture.GetDepartureTime()
+                      << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at "
+                      << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins << std::endl;
+
+            startDeparture = endDeparture;
+        }
     }
     else
     {
