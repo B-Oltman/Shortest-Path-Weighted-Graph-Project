@@ -142,39 +142,34 @@ void StationGraph::build_departures_graph(std::vector<std::vector<std::string>> 
         }
         
         for(int j = 0; j < tripDataTable.size(); j++)
-        {
-            // skip current index
-            if(j == i) continue;
-            if(tripDataTable[i][1] == tripDataTable[j][0])
+        {                        
+            if(j != i && tripDataTable[i][1] == tripDataTable[j][0] && tripDataTable[i][3] < tripDataTable[j][2])
             {
-                if(tripDataTable[i][3] < tripDataTable[j][2])
-                {                    
-                    departureTime = stoi(tripDataTable[i][2]);
-                    rideTimeToDestination = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
-                    layoverAtDestination = stoi(tripDataTable[j][2]) - stoi(tripDataTable[i][3]);
-                    totalTripTime = rideTimeToDestination + layoverAtDestination;
+                departureTime = stoi(tripDataTable[i][2]);
+                rideTimeToDestination = stoi(tripDataTable[i][3]) - stoi(tripDataTable[i][2]);
+                layoverAtDestination = stoi(tripDataTable[j][2]) - stoi(tripDataTable[i][3]);
+                totalTripTime = rideTimeToDestination + layoverAtDestination;
 
-                    // Map trip ID to its corresponding key value for easy look up.
-                    for(int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
+                // Map trip ID to its corresponding key value for easy look up.
+                for (int keyIndx = 0; keyIndx < tripDataTable.size(); keyIndx++)
+                {
+                    if (station_records_match(keyIndx, j, tripDataTable))
                     {
-                        if(station_records_match(keyIndx, j, tripDataTable))
-                        {
-                            destinationKey = keyIndx;
-                        }
+                        destinationKey = keyIndx;
                     }
-                    
-                    // Search adjacency list for matching vertex to insert new edge data. Can't be a simple index with current setup.
-                    // This is the only time this search must happen because when the graph is created, each departure is assigned a lookupKey that can be used
-                    // to index the list and match the vertex.
-                    for(int k = 0; k < tripDataTable.size(); k++)
+                }
+
+                // Search adjacency list for matching vertex to insert new edge data. Can't be a simple index with current setup.
+                // This is the only time this search must happen because when the graph is created, each departure is assigned a lookupKey that can be used
+                // to index the list and match the vertex.
+                for (int k = 0; k < tripDataTable.size(); k++)
+                {
+                    //If the target edge departure time and departure station match, this is the correct insertion point, add edge to adjacency list.
+                    if (station_records_match(k, i, tripDataTable))
                     {
-                        //If the target edge departure time and departure station match, this is the correct insertion point, add edge to adjacency list.
-                        if(station_records_match(k, i, tripDataTable))
-                        {                        
-                            tempTripTable[k].first.first = departureTime;
-                            tempTripTable[k].first.second = stoi(tripDataTable[i][0]);
-                            tempTripTable[k].second.push_back({destinationKey, rideTimeToDestination, layoverAtDestination, totalTripTime});
-                        }
+                        tempTripTable[k].first.first = departureTime;
+                        tempTripTable[k].first.second = stoi(tripDataTable[i][0]);
+                        tempTripTable[k].second.push_back({destinationKey, rideTimeToDestination, layoverAtDestination, totalTripTime});
                     }
                 }
             }
