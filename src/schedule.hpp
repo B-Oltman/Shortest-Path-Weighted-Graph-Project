@@ -138,7 +138,8 @@ void Schedule::PrintStationSchedule(int stationID)
         }
         else
         {
-            std::cout << "There are no trains leaving from " << SimpleStationNameLookup(station.GetID()) << std::endl;
+            std::cout << "There are no trains leaving from "
+                << SimpleStationNameLookup(station.GetID()) << std::endl;
         }
 
         station = stationGraph->GetStationFromArrivalGraph(stationID);
@@ -154,7 +155,8 @@ void Schedule::PrintStationSchedule(int stationID)
         }
         else
         {
-            std::cout << "There are no scheduled arrivals for " << SimpleStationNameLookup(station.GetID()) << std::endl;
+            std::cout << "There are no scheduled arrivals for "
+                << SimpleStationNameLookup(station.GetID()) << std::endl;
         }
     }
     else
@@ -247,8 +249,10 @@ void Schedule::ShortestTripLengthRideTime()
             totalTripMins += trip.rideTimeToDestinationMins;
         }
 
-        std::cout << "\nMinimum time spent on train from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << "\nis "
-                  << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes. Layover time not included.\nItinerary\n----------\n";
+        std::cout << "\nMinimum time spent on train from " << SimpleStationNameLookup(stationPair.first)
+            << " to " << SimpleStationNameLookup(stationPair.second) << "\nis "
+            << totalTripMins / 60 << " hours and " << totalTripMins % 60
+            << " minutes. Layover time not included.\nItinerary\n----------\n";
 
         Departure startDeparture = tripRoute.departingStation;        
         for(int i = 0; i < tripRoute.tripList.size(); i++)
@@ -266,7 +270,8 @@ void Schedule::ShortestTripLengthRideTime()
     }
     else
     {
-        std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << ".\n";
+        std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first)
+            << " to " << SimpleStationNameLookup(stationPair.second) << ".\n";
     }
 }
 
@@ -283,8 +288,10 @@ void Schedule::ShortestTripLengthWithLayover()
             totalTripMins += trip.tripWeight;
         }
 
-        std::cout << "\nShortest overall travel time from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << " \nis " 
-        << totalTripMins / 60 << " hours and " << totalTripMins % 60 << " minutes including layovers.\nItinerary\n----------\n";
+        std::cout << "\nShortest overall travel time from " << SimpleStationNameLookup(stationPair.first)
+            << " to " << SimpleStationNameLookup(stationPair.second) << " \nis " 
+            << totalTripMins / 60 << " hours and " << totalTripMins % 60
+            << " minutes including layovers.\nItinerary\n----------\n";
 
         Departure startDeparture = tripRoute.departingStation;
         for (int i = 0; i < tripRoute.tripList.size(); i++)
@@ -302,7 +309,8 @@ void Schedule::ShortestTripLengthWithLayover()
     }
     else
     {
-        std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first) << " to " << SimpleStationNameLookup(stationPair.second) << ".\n";
+        std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first) << " to "
+        << SimpleStationNameLookup(stationPair.second) << ".\n";
     }
 }
 

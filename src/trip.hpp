@@ -3,8 +3,7 @@
 struct Trip {
     int destinationID;
     int departureTime;
-    int arrivalTime;
-    int travelTimeMins;
+    int arrivalTime;    
 };
 
 struct TripPlusLayover{

@@ -7,7 +7,6 @@ class Station {
         int GetID() const;
         int GetTripCount() const;
         Trip GetTrip(int tripIndex) const;
-        Trip FindTripByDestination(int destinationID);
         bool StationIsValid() const;
         Station(int ID, std::vector<Trip> tripArray);
     private:
@@ -24,19 +23,6 @@ Station::Station(int ID, std::vector<Trip> tripArray)
 bool Station::StationIsValid() const
 {
     return (stationID > 0);
-}
-
-Trip Station::FindTripByDestination(int destinationID)
-{
-    for(Trip trip : trips)
-    {
-        if(trip.destinationID == destinationID)
-        {
-            return trip;
-        }
-    }
-
-    return {-1};
 }
 
 Trip Station::GetTrip(int tripIndex) const

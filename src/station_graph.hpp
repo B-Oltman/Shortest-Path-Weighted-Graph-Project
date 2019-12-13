@@ -84,8 +84,7 @@ void StationGraph::build_stations_graph(std::vector<std::vector<std::string>> tr
         int destinationID = stoi(tripDataTable[i][1]);
         int arrivalTime = stoi(tripDataTable[i][3]);
         int departureTime = stoi(tripDataTable[i][2]);
-        int travelTimeMins = (arrivalTime - departureTime);
-        tempTripTable[startID].push_back({destinationID, departureTime, arrivalTime, travelTimeMins});
+        tempTripTable[startID].push_back({destinationID, departureTime, arrivalTime});
     }
 
     //Construct the stations and add trips to graph.
@@ -212,8 +211,7 @@ void StationGraph::build_station_arrivals_graph(std::vector<std::vector<std::str
         int destinationID = stoi(tripDataTable[i][0]);
         int arrivalTime = stoi(tripDataTable[i][2]);
         int departureTime = stoi(tripDataTable[i][3]);
-        int travelTimeMins = (arrivalTime - departureTime);
-        tempTripTable[startID].push_back({destinationID, departureTime, arrivalTime, travelTimeMins});
+        tempTripTable[startID].push_back({destinationID, departureTime, arrivalTime});
     }
 
     //Construct the stations and add trips to graph.
