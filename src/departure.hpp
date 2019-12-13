@@ -7,6 +7,7 @@ class Departure {
         int GetStationID() const;
         int GetTripCount() const;
         int GetLookUpKey() const;
+        int GetDepartureTime() const;
         bool IsFinalDestination();
         TripPlusLayover GetTrip(int tripIndex) const;
         TripPlusLayover FindTripByDestinationKey(int destinationKey);
@@ -24,6 +25,11 @@ Departure::Departure(std::vector<TripPlusLayover> tripArray, int ID, int key, in
     stationID = ID;
     lookUpKey = key;
     departureTime = departure;
+}
+
+int Departure::GetDepartureTime() const
+{
+    return departureTime;
 }
 
 bool Departure::IsFinalDestination()
