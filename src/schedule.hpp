@@ -6,10 +6,10 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
-#include "station_graph.hpp"
 #include "trip.hpp"
 #include "utility.hpp"
 #include "route.hpp"
+#include "station_graph.hpp"
 
 class Schedule{
     public:
@@ -51,9 +51,10 @@ class Schedule{
         void build_trip_data_table(std::string trainsData);
         int prompt_twenty_four_time() const;
         int prompt_station_id() const;
-        std::pair<int, int> prompt_station_pair_id() const;
-        
+        std::pair<int, int> prompt_station_pair_id() const;        
 };
+
+
 
 Schedule::Schedule(std::string stationData, std::string trainsData)
 {
@@ -503,4 +504,6 @@ void Schedule::GetRoute()
         " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
     }
 }
+
+
 

@@ -7,6 +7,7 @@
 #include "departure.hpp"
 #include "route.hpp"
 
+
 class StationGraph{
     public:
         StationGraph(std::vector<std::vector<std::string>> const tripData, std::vector<std::vector<std::string>> const stationData, int stationsCount);

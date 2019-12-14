@@ -8,14 +8,6 @@
 #include "schedule.hpp"
 
 using namespace std;
-/*******************GENERAL TO DOS*******************************
- * TODO(baruch): Handle adding leading 0 to times that are under 4 wide 850 -> 0850
- * TODO(baruch): BUG in shortest route train time only code. Does not invalidate impossible routes for which departure time is during current train ride.
- * for precomputation, I need to finalize the new graph structure for the layover version and use that structure in the no-layover route solution also.
- * can't just use stations as vertex, must use departures, otherwise there is no way to precompute if the train routes are valid when a departure happens during
- * a ride.
- * 
- * **************************************************************/
 
 
 int main(int argc, char** argv)
@@ -25,7 +17,7 @@ int main(int argc, char** argv)
     std::ifstream trainFile;
     std::stringstream trainData;
 
-    if(argc < 3)
+    if(argc != 3)
     {
         std::cout << "useage: ./sched.out <stations.dat> <trains.dat>\n";
         return 0;
