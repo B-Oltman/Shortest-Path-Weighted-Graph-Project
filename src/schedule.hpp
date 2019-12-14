@@ -19,28 +19,24 @@ class Schedule{
         ~Schedule();
         //Print schedule for all stations
         void PrintCompleteSchedule();
-
         //Print schedule for selected station no arguments is overloaded to prompt for input
         void PrintStationSchedule();
         // int argument does not prompt user, iD must be passed in.
         void PrintStationSchedule(int stationID);
-
         //Print station number for given station name
         void LookUpStationId();
-
         //Print station name for given station number
         void LookUpStationName();
         std::string SimpleStationNameLookup(int stationID);
-
         //Returns whether there is a direct route from station A to station B
         void GetDirectRoute();
-        //GetRoute - returns whether there is any route from station A to station B
+        //Returns whether there is any route from station A to station B
         void GetRoute();
-        //Returns the shortest time to go from A to B with layover time excluded, else alert to no path
+        //Gets the shortest time and itinerary to go from A to B, paths are weighted by travel time only
         void ShortestTripLengthRideTime();
-        //Returns the shortest time to go from A to B, layovers are allowed, else alert user to no path
+        //Gets the shortest time and itinerary to go from A to B, paths are weighted by layover time + travel time
         void ShortestTripLengthWithLayover();
-        //Returns the shortest time to go from A to B when departing at a specific time only.
+        //Returns the shortest time and itinerary  to go from A to B when departing at a specific time only.
         void ShortestTripDepartureTime(); 
     private:
         std::vector<std::vector<std::string>> stationLookupTable;
@@ -53,8 +49,6 @@ class Schedule{
         int prompt_station_id() const;
         std::pair<int, int> prompt_station_pair_id() const;        
 };
-
-
 
 Schedule::Schedule(std::string stationData, std::string trainsData)
 {
@@ -69,98 +63,6 @@ Schedule::~Schedule()
     {
         delete stationGraph;
     }
-}
-
-void Schedule::ShortestTripDepartureTime()
-{
-    std::pair<int, int> stationPair = prompt_station_pair_id();
-    std::cout << "When would you like to leave?\n";
-
-    int time = prompt_twenty_four_time();
-    Route tripRoute = stationGraph->GetRouteFromTime(time, stationPair.first, stationPair.second);
-    if (tripRoute.RouteIsValid())
-    {
-        int totalTripMins = 0;
-        for (TripPlusLayover trip : tripRoute.tripList)
-        {
-            totalTripMins += trip.tripWeight;
-        }
-
-        std::cout << "\nShortest overall travel time from " << SimpleStationNameLookup(stationPair.first)
-                  << " to " << SimpleStationNameLookup(stationPair.second) << " \nis "
-                  << totalTripMins / 60 << " hours and " << totalTripMins % 60
-                  << " minutes including layovers.\nItinerary\n----------\n";
-
-        Departure startDeparture = tripRoute.departingStation;
-        for (int i = 0; i < tripRoute.tripList.size(); i++)
-        {
-            TripPlusLayover currentTrip = tripRoute.tripList[i];
-            Departure endDeparture = stationGraph->GetDepartureFromGraph(currentTrip.destinationKey);
-
-            std::cout << "Leave from " << SimpleStationNameLookup(startDeparture.GetStationID())
-                      << " at " << std::setw(4) << std::setfill('0') << startDeparture.GetDepartureTime()
-                      << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at " 
-                      << std::setw(4) << std::setfill('0')  << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins
-                      << std::endl;
-
-            startDeparture = endDeparture;
-        }
-    }
-    else
-    {
-        std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first) << " to "
-                  << SimpleStationNameLookup(stationPair.second) << " leaving at "  << std::setw(4) << std::setfill('0') << time << std::endl;
-    }
-}
-int Schedule::prompt_twenty_four_time() const
-{
-    std::cout << "Enter time (HH:MM): ";
-    std::pair<int, int> time = {-1,-1};
-
-    int firstH = 0;
-    int secondH = 0;
-    int firstM = 0;
-    int secondM = 0;   
-
-    Utility::ClearInStream(); 
-    bool valid = false;
-    while (!valid)
-    {            
-        std::string line;
-        std::getline(std::cin, line);        
-
-        firstH = line[0] - '0';
-        secondH = line[1] - '0';        
-        firstM = line[3] - '0';
-        secondM = line[4] - '0';        
-
-        if((firstH == 0 && (secondH > 0 && secondH <= 9)) ||
-            (firstH == 1 && (secondH >= 0 && secondH <= 2)) &&
-            (firstM >= 0 && firstM < 6) &&
-            (secondM >= 0 && secondM <= 9))
-        {
-            valid = true;
-        }
-        else
-        {
-            valid = false;
-            std::cout << "Invalid time, must be in HH:MM format: ";            
-        }
-    }
-
-    int twentyFourTime = 0;
-    int hour = (firstH * 10) + secondH;
-    int min = (firstM * 10) + secondM;
-    if(hour < 12 && hour > 1)
-    {
-        twentyFourTime = (hour + 12) * 100;
-    }
-    else
-    {
-        twentyFourTime = hour * 100;
-    }
-
-    return (twentyFourTime += min);    
 }
 
 void Schedule::PrintCompleteSchedule()
@@ -287,18 +189,6 @@ void Schedule::LookUpStationId()
     }
 }
 
-std::string Schedule::SimpleStationNameLookup(int stationID)
-{
-    if(stationID > 0 && stationID <= stationLookupTable.size())
-    {
-           return stationLookupTable[stationID - 1][1];
-    }
-    else
-    {
-        return "INVALID";
-    }
-}
-
 void Schedule::LookUpStationName()
 {
     int stationID;
@@ -316,6 +206,52 @@ void Schedule::LookUpStationName()
     else
     {
         std::cout <<"Invalid station id (enter value betweeen 1 and " << stationLookupTable.size() <<")\n";
+    }
+}
+
+std::string Schedule::SimpleStationNameLookup(int stationID)
+{
+    if(stationID > 0 && stationID <= stationLookupTable.size())
+    {
+           return stationLookupTable[stationID - 1][1];
+    }
+    else
+    {
+        return "INVALID";
+    }
+}
+
+void Schedule::GetDirectRoute()
+{
+    std::pair<int, int> stationPair = prompt_station_pair_id();
+
+    if(stationGraph->DirectPathExists(stationPair.first, stationPair.second))
+    {
+
+        std::cout << "Nonstop service is available from " << SimpleStationNameLookup(stationPair.first) << 
+        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
+    }
+    else
+    {
+        std::cout << "Nonstop service is NOT available from " << SimpleStationNameLookup(stationPair.first) << 
+        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
+    }
+}
+
+void Schedule::GetRoute()
+{
+    std::pair<int, int> stationPair = prompt_station_pair_id();
+
+    if(stationGraph->PathExists(stationPair.first, stationPair.second))
+    {
+
+        std::cout << "Service is available from " << SimpleStationNameLookup(stationPair.first) << 
+        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
+    }
+    else
+    {
+        std::cout << "Service is NOT available from " << SimpleStationNameLookup(stationPair.first) << 
+        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
     }
 }
 
@@ -399,6 +335,58 @@ void Schedule::ShortestTripLengthWithLayover()
     }
 }
 
+void Schedule::ShortestTripDepartureTime()
+{
+    std::pair<int, int> stationPair = prompt_station_pair_id();
+    std::cout << "When would you like to leave?\n";
+
+    int time = prompt_twenty_four_time();
+    Route tripRoute = stationGraph->GetRouteFromTime(time, stationPair.first, stationPair.second);
+    if (tripRoute.RouteIsValid())
+    {
+        int totalTripMins = 0;
+        for (TripPlusLayover trip : tripRoute.tripList)
+        {
+            totalTripMins += trip.tripWeight;
+        }
+
+        std::cout << "\nShortest overall travel time from " << SimpleStationNameLookup(stationPair.first)
+                  << " to " << SimpleStationNameLookup(stationPair.second) << " \nis "
+                  << totalTripMins / 60 << " hours and " << totalTripMins % 60
+                  << " minutes including layovers.\nItinerary\n----------\n";
+
+        Departure startDeparture = tripRoute.departingStation;
+        for (int i = 0; i < tripRoute.tripList.size(); i++)
+        {
+            TripPlusLayover currentTrip = tripRoute.tripList[i];
+            Departure endDeparture = stationGraph->GetDepartureFromGraph(currentTrip.destinationKey);
+
+            std::cout << "Leave from " << SimpleStationNameLookup(startDeparture.GetStationID())
+                      << " at " << std::setw(4) << std::setfill('0') << startDeparture.GetDepartureTime()
+                      << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at " 
+                      << std::setw(4) << std::setfill('0')  << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins
+                      << std::endl;
+
+            startDeparture = endDeparture;
+        }
+    }
+    else
+    {
+        std::cout << "There are no routes from " << SimpleStationNameLookup(stationPair.first) << " to "
+                  << SimpleStationNameLookup(stationPair.second) << " leaving at "  << std::setw(4) << std::setfill('0') << time;
+
+        if(time > 1300)
+        {
+            std::cout << " or " << std::setw(4) << std::setfill('0') << time - 1200 << std::endl;
+        }
+        else
+        {
+            std::cout << std::endl;
+        }
+        
+    }
+}
+
 void Schedule::build_station_lookup_table(std::string stationData)
 {
     std::stringstream lineStream(stationData);
@@ -437,6 +425,57 @@ void Schedule::build_trip_data_table(std::string trainsData)
     }
 }
 
+int Schedule::prompt_twenty_four_time() const
+{
+    std::cout << "Enter time (HH:MM): ";
+    std::pair<int, int> time = {-1,-1};
+
+    int firstH = 0;
+    int secondH = 0;
+    int firstM = 0;
+    int secondM = 0;   
+
+    Utility::ClearInStream(); 
+    bool valid = false;
+    while (!valid)
+    {            
+        std::string line;
+        std::getline(std::cin, line);        
+
+        firstH = line[0] - '0';
+        secondH = line[1] - '0';        
+        firstM = line[3] - '0';
+        secondM = line[4] - '0';        
+
+        if((firstH == 0 && (secondH > 0 && secondH <= 9)) ||
+            (firstH == 1 && (secondH >= 0 && secondH <= 2)) &&
+            (firstM >= 0 && firstM < 6) &&
+            (secondM >= 0 && secondM <= 9))
+        {
+            valid = true;
+        }
+        else
+        {
+            valid = false;
+            std::cout << "Invalid time, must be in HH:MM format: ";            
+        }
+    }
+
+    int twentyFourTime = 0;
+    int hour = (firstH * 10) + secondH;
+    int min = (firstM * 10) + secondM;
+    if(hour < 12 && hour > 1)
+    {
+        twentyFourTime = (hour + 12) * 100;
+    }
+    else
+    {
+        twentyFourTime = hour * 100;
+    }
+
+    return (twentyFourTime += min);    
+}
+
 int Schedule::prompt_station_id() const
 {
     std::cout << "Enter station id: ";
@@ -469,40 +508,6 @@ std::pair<int, int> Schedule::prompt_station_pair_id() const
     }
 
     return {departID, destID};
-}
-
-void Schedule::GetDirectRoute()
-{
-    std::pair<int, int> stationPair = prompt_station_pair_id();
-
-    if(stationGraph->DirectPathExists(stationPair.first, stationPair.second))
-    {
-
-        std::cout << "Nonstop service is available from " << SimpleStationNameLookup(stationPair.first) << 
-        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
-    }
-    else
-    {
-        std::cout << "Nonstop service is NOT available from " << SimpleStationNameLookup(stationPair.first) << 
-        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
-    }
-}
-
-void Schedule::GetRoute()
-{
-    std::pair<int, int> stationPair = prompt_station_pair_id();
-
-    if(stationGraph->PathExists(stationPair.first, stationPair.second))
-    {
-
-        std::cout << "Service is available from " << SimpleStationNameLookup(stationPair.first) << 
-        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
-    }
-    else
-    {
-        std::cout << "Service is NOT available from " << SimpleStationNameLookup(stationPair.first) << 
-        " to " << SimpleStationNameLookup(stationPair.second) << std::endl;
-    }
 }
 
 

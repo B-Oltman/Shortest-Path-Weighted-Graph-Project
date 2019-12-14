@@ -7,6 +7,19 @@
 #include "departure.hpp"
 #include "route.hpp"
 
+/*
+    Station graph has a few parts, all graphs are pre-computed as adjacency lists, but then converted to adjacency matrix format for
+    processing with the floyd-warshal. After the shortest path sequence tables are created for the various graph types, layovers included or not,
+    then a route can be created by walking the sequence tables. Finally, the shortest route is returned for processing in the schedule.
+
+    There are secondary graph types that are used for different purposes, such as looking up station data easily, and looking up arrivals easily.
+
+    The meat of processing happens with the departureGraphList, this graph maps all valid departures so that we can determine which are the shortest
+    routes based on ride time only, or based on layover plus ride time. The graph creation is rather complex, but once processed, it enables much more
+    efficient look up operations.
+
+    see build_departures_graph and floyd_warshal_shortest_paths for the bulk of graph operations, also get_route paired with get_shortest_route.
+*/
 
 class StationGraph{
     public:

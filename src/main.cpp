@@ -7,9 +7,6 @@
 #include "utility.hpp"
 #include "schedule.hpp"
 
-using namespace std;
-
-
 int main(int argc, char** argv)
 {
     std::ifstream stationFile;
@@ -37,7 +34,6 @@ int main(int argc, char** argv)
     Utility::PrintMainMenu();
 
     bool quit = false;
-
     while(!quit)
     {
         std::cout << "Enter choice: ";
