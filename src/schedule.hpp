@@ -213,7 +213,7 @@ std::string Schedule::SimpleStationNameLookup(int stationID)
 {
     if(stationID > 0 && stationID <= stationLookupTable.size())
     {
-           return stationLookupTable[stationID - 1][1];
+        return stationLookupTable[stationID - 1][1];
     }
     else
     {
