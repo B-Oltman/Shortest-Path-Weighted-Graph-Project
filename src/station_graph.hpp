@@ -49,11 +49,11 @@ class StationGraph{
         std::vector<std::vector<int>>* shortestRouteWithLayoverSequenceTable;
         std::vector<std::vector<int>>* shortestRouteWithoutLayoverSequenceTable;
         void floyd_warshal_shortest_paths(bool includeLayovers);
-        Route get_route(int departureKey, int destinationKey, std::vector<std::vector<int>>& routeLookUpTable);
-        Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>> &routeLookUpTable, bool includeLayovers);
+        Route get_route(int departureKey, int destinationKey, const std::vector<std::vector<int>>& routeLookUpTable);
+        Route get_shortest_route(int departureID, int destinationID, const std::vector<std::vector<int>> &routeLookUpTable, bool includeLayovers);
         Route get_shortest_route_from_time(int departureID, int destinationID, int twentyFourTime);
-        bool direct_route_exists(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable);
-        bool station_records_match(int Key1, int Key2, std::vector<std::vector<std::string>>& tripDataTable);
+        bool direct_route_exists(int departureID, int destinationID, const std::vector<std::vector<int>>& routeLookUpTable);
+        bool station_records_match(int Key1, int Key2, const std::vector<std::vector<std::string>>& tripDataTable);
         void build_stations_graph(std::vector<std::vector<std::string>> tripData);
         void build_station_arrivals_graph(std::vector<std::vector<std::string>> tripData);
         void build_departures_graph(std::vector<std::vector<std::string>> tripData, std::vector<std::vector<std::string>> stationData);
@@ -110,7 +110,7 @@ void StationGraph::build_stations_graph(std::vector<std::vector<std::string>> tr
     }
 }
 
-bool StationGraph::station_records_match(int Key1, int Key2, std::vector<std::vector<std::string>>& tripDataTable)
+bool StationGraph::station_records_match(int Key1, int Key2, const std::vector<std::vector<std::string>>& tripDataTable)
 {
     return (stoi(tripDataTable[Key1][0]) == stoi(tripDataTable[Key2][0])
         && stoi(tripDataTable[Key1][1]) == stoi(tripDataTable[Key2][1])
@@ -232,7 +232,7 @@ void StationGraph::build_station_arrivals_graph(std::vector<std::vector<std::str
     }
 }
 
-Route StationGraph::get_route(int departureKey, int destinationKey, std::vector<std::vector<int>>& routeLookUpTable)
+Route StationGraph::get_route(int departureKey, int destinationKey, const std::vector<std::vector<int>>& routeLookUpTable)
 {        
     std::vector<TripPlusLayover> shortPath;
     
@@ -270,7 +270,7 @@ Route StationGraph::get_route(int departureKey, int destinationKey, std::vector<
         return{{{}, -1, -1, -1} ,{}};
     }            
 }
-bool StationGraph::direct_route_exists(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable)
+bool StationGraph::direct_route_exists(int departureID, int destinationID, const std::vector<std::vector<int>>& routeLookUpTable)
 {
     std::vector<Route> potentialRouteList;
 
@@ -294,7 +294,7 @@ bool StationGraph::direct_route_exists(int departureID, int destinationID, std::
 
     return false;
 }
-Route StationGraph::get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>> &routeLookUpTable, bool includeLayovers)
+Route StationGraph::get_shortest_route(int departureID, int destinationID, const std::vector<std::vector<int>> &routeLookUpTable, bool includeLayovers)
 {
     std::vector<Route> potentialRouteList;
 
