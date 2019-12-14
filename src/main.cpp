@@ -85,6 +85,7 @@ int main(int argc, char** argv)
                 trainSchedule.ShortestTripLengthWithLayover();
                 break;
             case 9:
+                trainSchedule.ShortestTripDepartureTime();
                 break;
             case 0:
                 quit = true;

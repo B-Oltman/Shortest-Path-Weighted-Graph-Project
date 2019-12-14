@@ -37,9 +37,10 @@ class Schedule{
         void GetRoute();
         //Returns the shortest time to go from A to B with layover time excluded, else alert to no path
         void ShortestTripLengthRideTime();
-        //TripLengthYesLayover - returns the shortest time to go from A to B, layovers are allowed, else alert user to no path
+        //Returns the shortest time to go from A to B, layovers are allowed, else alert user to no path
         void ShortestTripLengthWithLayover();
-        //TripLengthGivenTime - returns the shortest time to go from A to B when departing at a specific time only. 
+        //Returns the shortest time to go from A to B when departing at a specific time only.
+        void ShortestTripDepartureTime(); 
     private:
         std::vector<std::vector<std::string>> stationLookupTable;
         std::vector<std::vector<std::string>> tripDataTable;
@@ -47,6 +48,7 @@ class Schedule{
         // Builds a lookup table to map station id to station name.
         void build_station_lookup_table(std::string stationData);        
         void build_trip_data_table(std::string trainsData);
+        int prompt_twenty_four_time() const;
         int prompt_station_id() const;
         std::pair<int, int> prompt_station_pair_id() const;
         
@@ -65,6 +67,97 @@ Schedule::~Schedule()
     {
         delete stationGraph;
     }
+}
+
+void Schedule::ShortestTripDepartureTime()
+{
+    std::pair<int, int> stationPair = prompt_station_pair_id();
+    std::cout << "When would you like to leave?\n";
+
+    int time = prompt_twenty_four_time();
+    Route tripRoute = stationGraph->GetRouteFromTime(time, stationPair.first, stationPair.second);
+    if (tripRoute.RouteIsValid())
+    {
+        int totalTripMins = 0;
+        for (TripPlusLayover trip : tripRoute.tripList)
+        {
+            totalTripMins += trip.tripWeight;
+        }
+
+        std::cout << "\nShortest overall travel time from " << SimpleStationNameLookup(stationPair.first)
+                  << " to " << SimpleStationNameLookup(stationPair.second) << " \nis "
+                  << totalTripMins / 60 << " hours and " << totalTripMins % 60
+                  << " minutes including layovers.\nItinerary\n----------\n";
+
+        Departure startDeparture = tripRoute.departingStation;
+        for (int i = 0; i < tripRoute.tripList.size(); i++)
+        {
+            TripPlusLayover currentTrip = tripRoute.tripList[i];
+            Departure endDeparture = stationGraph->GetDepartureFromGraph(currentTrip.destinationKey);
+
+            std::cout << "Leave from " << SimpleStationNameLookup(startDeparture.GetStationID())
+                      << " at " << startDeparture.GetDepartureTime()
+                      << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at "
+                      << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins << std::endl;
+
+            startDeparture = endDeparture;
+        }
+    }
+    else
+    {
+        std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first) << " to "
+                  << SimpleStationNameLookup(stationPair.second) << " leaving at " << time << std::endl;
+    }
+}
+int Schedule::prompt_twenty_four_time() const
+{
+    std::cout << "Enter time (HH:MM): ";
+    std::pair<int, int> time = {-1,-1};
+
+    int firstH = 0;
+    int secondH = 0;
+    int firstM = 0;
+    int secondM = 0;   
+
+    Utility::ClearInStream(); 
+    bool valid = false;
+    while (!valid)
+    {            
+        std::string line;
+        std::getline(std::cin, line);        
+
+        firstH = line[0] - '0';
+        secondH = line[1] - '0';        
+        firstM = line[3] - '0';
+        secondM = line[4] - '0';        
+
+        if((firstH == 0 && (secondH > 0 && secondH <= 9)) ||
+            (firstH == 1 && (secondH >= 0 && secondH <= 2)) &&
+            (firstM >= 0 && firstM < 6) &&
+            (secondM >= 0 && secondM <= 9))
+        {
+            valid = true;
+        }
+        else
+        {
+            valid = false;
+            std::cout << "Invalid time, must be in HH:MM format: ";            
+        }
+    }
+
+    int twentyFourTime = 0;
+    int hour = (firstH * 10) + secondH;
+    int min = (firstM * 10) + secondM;
+    if(hour < 12 && hour > 1)
+    {
+        twentyFourTime = (hour + 12) * 100;
+    }
+    else
+    {
+        twentyFourTime = hour * 100;
+    }
+
+    return (twentyFourTime += min);    
 }
 
 void Schedule::PrintCompleteSchedule()
@@ -187,9 +280,6 @@ void Schedule::LookUpStationId()
     {
         std::cout <<"Invalid station name.\n";
     }
-
-    std::cout <<"Press Enter to continue.";
-    Utility::ClearInStream();
 }
 
 std::string Schedule::SimpleStationNameLookup(int stationID)
@@ -209,6 +299,8 @@ void Schedule::LookUpStationName()
     int stationID;
     std::cout << "Enter station id: ";
     std::cin >> stationID;
+    //Clear input buffer
+    Utility::ClearInStream();
 
     if(stationID > 0 && stationID <= stationLookupTable.size())
     {
@@ -220,19 +312,6 @@ void Schedule::LookUpStationName()
     {
         std::cout <<"Invalid station id (enter value betweeen 1 and " << stationLookupTable.size() <<")\n";
     }
-  
-    //Clear input buffer
-    Utility::ClearInStream();
-
-    std::cout << "Press Enter to continue.";
-    bool wait = true;
-    while(wait)
-    {
-        if(std::cin.get() == '\n')
-        {
-            wait = false;
-        }
-    }
 }
 
 void Schedule::ShortestTripLengthRideTime()
@@ -240,7 +319,7 @@ void Schedule::ShortestTripLengthRideTime()
     std::pair<int, int> stationPair = prompt_station_pair_id();
     Route tripRoute = stationGraph->GetShortestRoute(stationPair.first, stationPair.second, false);
 
-    if (tripRoute.tripList.size() > 0)
+    if (tripRoute.RouteIsValid())
     {
         int totalTripMins = 0;
         for (TripPlusLayover trip : tripRoute.tripList)
@@ -280,7 +359,7 @@ void Schedule::ShortestTripLengthWithLayover()
     std::pair<int, int> stationPair = prompt_station_pair_id();
     Route tripRoute = stationGraph->GetShortestRoute(stationPair.first, stationPair.second, true);
 
-    if(tripRoute.tripList.size() > 0)
+    if(tripRoute.RouteIsValid())
     {        
         int totalTripMins = 0;
         for(TripPlusLayover trip : tripRoute.tripList)

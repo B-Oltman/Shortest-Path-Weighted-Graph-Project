@@ -16,6 +16,7 @@ class StationGraph{
         Station GetStationFromGraph(int stationID);
         Departure GetDepartureFromGraph(int lookupKey);
         Route GetShortestRoute(int departureStationID, int destinationStationID, bool includeLayovers);
+        Route GetRouteFromTime(int twentyFourTime, int departureStationID, int destinationStationID);
         Station GetStationFromArrivalGraph(int stationID);
         int GetVertexCount();
     private:
@@ -35,7 +36,8 @@ class StationGraph{
         std::vector<std::vector<int>>* shortestRouteWithoutLayoverSequenceTable;
         void floyd_warshal_shortest_paths(bool includeLayovers);
         Route get_route(int departureKey, int destinationKey, std::vector<std::vector<int>>& routeLookUpTable);
-        Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable, bool includeLayovers);   
+        Route get_shortest_route(int departureID, int destinationID, std::vector<std::vector<int>> &routeLookUpTable, bool includeLayovers);
+        Route get_shortest_route_from_time(int departureID, int destinationID, int twentyFourTime);
         bool direct_route_exists(int departureID, int destinationID, std::vector<std::vector<int>>& routeLookUpTable);
         bool station_records_match(int Key1, int Key2, std::vector<std::vector<std::string>>& tripDataTable);
         void build_stations_graph(std::vector<std::vector<std::string>> tripData);
@@ -327,6 +329,56 @@ Route StationGraph::get_shortest_route(int departureID, int destinationID, std::
     }
 }
 
+Route StationGraph::get_shortest_route_from_time(int departureID, int destinationID, int twentyFourTime)
+{
+    std::vector<Route> potentialRouteList;
+
+    for (int j = 0; j < departureGraphList->size(); j++)
+    {
+        for (int k = 0; k < departureGraphList->size(); k++)
+        {
+            if ((*departureGraphList)[j].GetStationID() == departureID && (*departureGraphList)[k].GetStationID() == destinationID)
+            {
+                Route potentialRoute = get_route(j, k, *shortestRouteWithLayoverSequenceTable);
+                if (potentialRoute.RouteIsValid() && (potentialRoute.departingStation.GetDepartureTime() == twentyFourTime ||
+                potentialRoute.departingStation.GetDepartureTime() == twentyFourTime - 1200))
+                {
+                    potentialRouteList.push_back(potentialRoute);
+                }
+            }
+        }
+    }
+
+    if (potentialRouteList.size() > 0)
+    {
+        //Determine which route is shortest and return it.
+        int minimumWeight = Utility::INF;
+        int shortestRouteIndex = -1;
+        for (int i = 0; i < potentialRouteList.size(); i++)
+        {
+            int totalCurrentWeight = 0;
+            for (int j = 0; j < potentialRouteList[i].tripList.size(); j++)
+            {
+                TripPlusLayover currentTrip = potentialRouteList[i].tripList[j];
+                totalCurrentWeight += currentTrip.tripWeight;
+            }
+
+            if (totalCurrentWeight < minimumWeight)
+            {
+                minimumWeight = totalCurrentWeight;
+                totalCurrentWeight = 0;
+                shortestRouteIndex = i;
+            }
+        }
+
+        return potentialRouteList[shortestRouteIndex];
+    }
+    else
+    {
+        return {{{}, -1, -1, -1}, {}};
+    }
+}
+
 void StationGraph::floyd_warshal_shortest_paths(bool includeLayovers)
 {
     // number of table entries will be the larger of station count and size of graph list.
@@ -392,6 +444,11 @@ Route StationGraph::GetShortestRoute(int departureStationID, int destinationStat
     {
         return get_shortest_route(departureStationID, destinationStationID, *shortestRouteWithoutLayoverSequenceTable, false);
     }
+}
+
+Route StationGraph::GetRouteFromTime(int twentyFourTime, int departureStationID, int destinationStationID)
+{    
+    return get_shortest_route_from_time(departureStationID, destinationStationID, twentyFourTime);
 }
 
 int StationGraph::GetVertexCount()
