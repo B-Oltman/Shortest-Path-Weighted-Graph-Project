@@ -4,6 +4,7 @@
 #include <string>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <algorithm>
 #include "station_graph.hpp"
 #include "trip.hpp"
@@ -96,9 +97,10 @@ void Schedule::ShortestTripDepartureTime()
             Departure endDeparture = stationGraph->GetDepartureFromGraph(currentTrip.destinationKey);
 
             std::cout << "Leave from " << SimpleStationNameLookup(startDeparture.GetStationID())
-                      << " at " << startDeparture.GetDepartureTime()
-                      << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at "
-                      << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins << std::endl;
+                      << " at " << std::setw(4) << std::setfill('0') << startDeparture.GetDepartureTime()
+                      << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at " 
+                      << std::setw(4) << std::setfill('0')  << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins
+                      << std::endl;
 
             startDeparture = endDeparture;
         }
@@ -106,7 +108,7 @@ void Schedule::ShortestTripDepartureTime()
     else
     {
         std::cout << "There is no route from " << SimpleStationNameLookup(stationPair.first) << " to "
-                  << SimpleStationNameLookup(stationPair.second) << " leaving at " << time << std::endl;
+                  << SimpleStationNameLookup(stationPair.second) << " leaving at "  << std::setw(4) << std::setfill('0') << time << std::endl;
     }
 }
 int Schedule::prompt_twenty_four_time() const
@@ -190,7 +192,8 @@ void Schedule::PrintStationSchedule()
             int departureTime = station.GetTrip(i).departureTime;
             int arrivalTime = station.GetTrip(i).arrivalTime;
             std::cout << "Departure to " << SimpleStationNameLookup(destinationID) << " at "
-                      << departureTime << ", arriving at " << arrivalTime << std::endl;
+                       << std::setw(4) << std::setfill('0') << departureTime << ", arriving at "
+                        << std::setw(4) << std::setfill('0') << arrivalTime << std::endl;
         }
     }
 
@@ -206,7 +209,7 @@ void Schedule::PrintStationSchedule()
             int departureID = station.GetTrip(i).destinationID;
             int arrivalTime = station.GetTrip(i).departureTime;
             std::cout << "Arrival from " << SimpleStationNameLookup(departureID) << " at "
-                      << arrivalTime << std::endl;
+                       << std::setw(4) << std::setfill('0') << arrivalTime << std::endl;
         }
     }
 }
@@ -226,7 +229,8 @@ void Schedule::PrintStationSchedule(int stationID)
                 int departureTime = station.GetTrip(i).departureTime;
                 int arrivalTime = station.GetTrip(i).arrivalTime;
                 std::cout << "Departure to " << SimpleStationNameLookup(destinationID) << " at "
-                          << departureTime << ", arriving at " << arrivalTime << std::endl;
+                           << std::setw(4) << std::setfill('0') << departureTime << ", arriving at "  << std::setw(4) << std::setfill('0') 
+                           << arrivalTime << std::endl;
             }
         }
         else
@@ -243,7 +247,7 @@ void Schedule::PrintStationSchedule(int stationID)
                 int departureID = station.GetTrip(i).destinationID;
                 int arrivalTime = station.GetTrip(i).departureTime;
                 std::cout << "Arrival from " << SimpleStationNameLookup(departureID) << " at "
-                          << arrivalTime << std::endl;
+                           << std::setw(4) << std::setfill('0') << arrivalTime << std::endl;
             }
         }
         else
@@ -340,9 +344,9 @@ void Schedule::ShortestTripLengthRideTime()
             Departure endDeparture = stationGraph->GetDepartureFromGraph(currentTrip.destinationKey);
 
             std::cout << "Leave from " << SimpleStationNameLookup(startDeparture.GetStationID())
-                << " at " << startDeparture.GetDepartureTime()
+                << " at "  << std::setw(4) << std::setfill('0') << startDeparture.GetDepartureTime()
                 << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at "
-                << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins << std::endl;
+                 << std::setw(4) << std::setfill('0') << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins << std::endl;
 
             startDeparture = endDeparture;
         }
@@ -379,9 +383,10 @@ void Schedule::ShortestTripLengthWithLayover()
             Departure endDeparture = stationGraph->GetDepartureFromGraph(currentTrip.destinationKey);
 
             std::cout << "Leave from " << SimpleStationNameLookup(startDeparture.GetStationID())
-                      << " at " << startDeparture.GetDepartureTime()
+                      << " at "  << std::setw(4) << std::setfill('0') << startDeparture.GetDepartureTime()
                       << ", arrive at " << SimpleStationNameLookup(endDeparture.GetStationID()) << " at "
-                      << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins << std::endl;
+                       << std::setw(4) << std::setfill('0') << startDeparture.GetDepartureTime() + currentTrip.rideTimeToDestinationMins
+                       << std::endl;
 
             startDeparture = endDeparture;
         }
